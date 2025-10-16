@@ -1,3 +1,4 @@
+use glam::Vec3;
 use crate::color::Color;
 
 
@@ -17,13 +18,13 @@ impl Buffer {
         }
     }
 
-    pub fn push(&mut self, data: Color) {
-        self.data.push(data);
-    }
+    // pub fn push(&mut self, data: Color) {
+    //     self.data.push(data);
+    // }
 
     #[allow(unused_attributes)]
-    pub fn write(&mut self, index: usize, data: Color) {
-        self.data[index] = data;
+    pub fn write(&mut self, color: Vec3) {
+        self.data.push(Color::from_vec3(color));
     }
 
     pub fn width(&self) -> usize {

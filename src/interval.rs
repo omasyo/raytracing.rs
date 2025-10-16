@@ -40,7 +40,11 @@ impl Interval {
         self.min < x && x < self.max
     }
 
+    pub fn clamp(&self, x: f32) -> f32 {
+        x.clamp(self.min, self.max)
+    }
+
     pub const EMPTY: Self = Self { min: f32::INFINITY, max: f32::NEG_INFINITY };
-    
+
     pub const UNIVERSE: Self = Self { min: f32::NEG_INFINITY, max: f32::INFINITY };
 }

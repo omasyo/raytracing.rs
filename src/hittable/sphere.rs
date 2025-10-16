@@ -1,8 +1,7 @@
-use std::ops::Range;
-use crate::Ray;
 use crate::hittable::{HitRecord, Hittable};
-use glam::Vec3;
 use crate::interval::Interval;
+use crate::Ray;
+use glam::Vec3;
 
 pub struct Sphere {
     center: Vec3,
@@ -28,9 +27,7 @@ impl Hittable for Sphere {
         if discriminant < 0.0 {
             return None;
         }
-
-        let p =(2f32..3f32);
-
+        
         let sqrt_d = discriminant.sqrt();
 
         let mut root = (h - sqrt_d) / a;

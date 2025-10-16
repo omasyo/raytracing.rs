@@ -10,15 +10,15 @@ impl Color {
         let mut color: u32 = 0;
         color |= (r as u32) << 16;
         color |= (g as u32) << 8;
-        color |= (b as u32) << 0;
+        color |= b as u32;
         Color { value: color }
     }
 
     pub fn from_vec3(v: Vec3) -> Color {
         let mut color: u32 = 0;
         color |= ((v.x * 255f32) as u32) << 16;
-        color |= ((v.y * 255f32) as u32)  << 8;
-        color |= ((v.z * 255f32) as u32)  << 0;
+        color |= ((v.y * 255f32) as u32) << 8;
+        color |= (v.z * 255f32) as u32;
         Color { value: color }
     }
 
@@ -30,7 +30,7 @@ impl Color {
         ((self.value >> 8) & 0xFF) as u8
     }
     pub fn blue(&self) -> u8 {
-        ((self.value >> 0) & 0xFF) as u8
+        (self.value & 0xFF) as u8
     }
 
     pub fn rgb(&self) -> (u8, u8, u8) {
