@@ -1,3 +1,4 @@
+use std::ops::{Add, AddAssign, Mul};
 use glam::Vec3;
 
 #[derive(Clone)]
@@ -20,6 +21,14 @@ impl Color {
         color |= ((v.y * 255f32) as u32) << 8;
         color |= (v.z * 255f32) as u32;
         Color { value: color }
+    }
+
+    pub fn to_vec3(&self) -> Vec3 {
+        Vec3 {
+            x: self.red() as f32 / 255.0,
+            y: self.green() as f32 / 255.0,
+            z: self.blue() as f32 / 255.0,
+        }
     }
 
     #[allow(unused_attributes)]
@@ -47,5 +56,25 @@ impl Color {
             self.green().isqrt(),
             self.blue().isqrt(),
         )
+    }
+}
+
+impl Mul<f64> for Color {
+    type Output = Self;
+    
+    fn mul(self, other: f64) -> Self::Output {
+        Color::new(
+            ((self.red() as f64) * other) as u8,
+            ((self.green() as f64) * other) as u8,
+            ((self.blue() as f64) * other) as u8,
+        )
+    }
+}
+
+impl Add for Color {
+    type Output = Color;
+
+    fn add(self, rhs: Self) -> Self::Output {
+        Color::new(self.red() + rhs.red(), self.green() + rhs.green(), self.blue() + rhs.blue())
     }
 }

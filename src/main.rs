@@ -29,7 +29,7 @@ fn main() {
 
     let properties = CameraProperties::default()
         .set_aspect_ratio(16.0 / 9.0)
-        .set_image_width(400)
+        .set_image_width(1200)
         .set_samples_per_pixel(100)
         .set_max_depth(50);
 

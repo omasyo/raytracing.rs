@@ -114,30 +114,35 @@ impl Camera {
 
     pub fn render(&self, world: &HittableList, tx: Sender<Buffer>) {
         let mut buffer = Buffer::new(self.image_width, self.image_height);
+        let mut loop_count = 1.0;
 
-        buffer
-            .data
-            .par_iter_mut()
-            .enumerate()
-            .for_each(|(index, pixel)| {
-                let j = index / self.image_width;
-                let i = index % self.image_width;
-                let mut pixel_color = vec3(0.0, 0.0, 0.0);
-                for _ in 0..self.samples_per_pixel {
+        loop {
+            buffer
+                .data
+                .par_iter_mut()
+                .enumerate()
+                .for_each(|(index, pixel)| {
+                    let j = index / self.image_width;
+                    let i = index % self.image_width;
+                    // let mut pixel_color = vec3(0.0, 0.0, 0.0);
+                    // for _ in 0..self.samples_per_pixel {
                     let ray = self.get_ray(i as f32, j as f32);
-                    pixel_color += ray_color(&ray, self.max_depth, world);
-                }
-                pixel_color /= self.samples_per_pixel as f32;
-                let color = Color::from_vec3(Vec3 {
-                    x: linear_to_gamma(pixel_color.x),
-                    y: linear_to_gamma(pixel_color.y),
-                    z: linear_to_gamma(pixel_color.z),
+                    let pixel_color = ray_color(&ray, self.max_depth, world);
+                    // }
+                    // pixel_color /= self.samples_per_pixel as f32;
+                    let new_color =/* Color::from_vec3(*/Vec3 {
+                        x: linear_to_gamma(pixel_color.x),
+                        y: linear_to_gamma(pixel_color.y),
+                        z: linear_to_gamma(pixel_color.z),
+                    }/*)*/;
+                    let old_color = pixel.to_vec3();
+                    let color = (old_color * (loop_count-1.0)/loop_count) + (new_color * (1.0/loop_count));
+                    *pixel = Color::from_vec3(color);
                 });
-                *pixel = color;
-            });
-
-        println!("Done");
-        tx.send(buffer).unwrap();
+            println!("Loop {loop_count}");
+            loop_count = loop_count + 1.0;
+            tx.send(buffer.clone()).unwrap();
+        }
 
         // (0..(self.image_width * self.image_height))
         // shuffled_range(0, self.image_width * self.image_height)
