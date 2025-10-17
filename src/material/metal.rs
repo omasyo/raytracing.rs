@@ -24,7 +24,7 @@ impl Material for Metal {
         }
 
         let result = ScatterResult {
-            scattered: Ray::new(rec.point, reflected),
+            scattered: Ray::new(rec.point, reflected, r_in.time),
             attenuation: self.albedo,
         };
         Some(result)

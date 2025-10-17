@@ -6,16 +6,25 @@ use glam::Vec3;
 use std::sync::Arc;
 
 pub struct Sphere {
-    center: Vec3,
+    center: Ray,
     radius: f32,
     material: Arc<dyn Material + Sync>,
 }
 
 impl Sphere {
-    pub fn new(center: Vec3, radius: f32, material: Arc<dyn Material + Sync>) -> Sphere {
+    pub fn new_stationary(center: Vec3, radius: f32, material: Arc<dyn Material + Sync>) -> Sphere {
         assert!(radius > 0.0);
         Sphere {
-            center,
+            center: Ray::new(center, Vec3::ZERO, 0.0),
+            radius,
+            material,
+        }
+    }
+
+    pub fn new_moving(center1: Vec3, center2: Vec3, radius: f32, material: Arc<dyn Material + Sync>) -> Sphere {
+        assert!(radius > 0.0);
+        Sphere {
+            center: Ray::new(center1, center2-center1, 0.0),
             radius,
             material,
         }
@@ -24,7 +33,8 @@ impl Sphere {
 
 impl Hittable for Sphere {
     fn hit(&self, ray: &Ray, ray_interval: Interval) -> Option<HitRecord> {
-        let oc = self.center - ray.origin;
+        let current_center = self.center.at(ray.time);
+        let oc = current_center - ray.origin;
 
         let a = ray.direction.length_squared();
         let h = ray.direction.dot(oc);
@@ -45,7 +55,7 @@ impl Hittable for Sphere {
             }
         }
         let point = ray.at(root);
-        let outward_normal = (point - self.center) / self.radius;
+        let outward_normal = (point - current_center) / self.radius;
 
         let rec = HitRecord::new(point, root, ray, outward_normal, self.material.clone());
 

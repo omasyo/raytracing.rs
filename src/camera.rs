@@ -179,10 +179,11 @@ impl Camera {
             self.center
         } else {
             self.defocus_disk_sample()
-        }; // todo inline
+        };
         let ray_direction = pixel_sample - ray_origin;
+        let ray_time = rand::random_range(0.0..=1.0);
 
-        Ray::new(ray_origin, ray_direction)
+        Ray::new(ray_origin, ray_direction, ray_time)
     }
 
     fn defocus_disk_sample(&self) -> Vec3 {

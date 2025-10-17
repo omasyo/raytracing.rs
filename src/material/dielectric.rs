@@ -33,7 +33,7 @@ impl Material for Dielectric {
         };
 
         let result = ScatterResult {
-            scattered: Ray::new(rec.point, direction),
+            scattered: Ray::new(rec.point, direction, r_in.time),
             attenuation: vec3(1.0, 1.0, 1.0),
         };
         Some(result)

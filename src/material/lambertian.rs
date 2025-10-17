@@ -23,7 +23,7 @@ impl Material for Lambertian {
         }
 
         let result = ScatterResult {
-            scattered: Ray::new(rec.point, scatter_direction),
+            scattered: Ray::new(rec.point, scatter_direction, r_in.time),
             attenuation: self.albedo,
         };
         Some(result)

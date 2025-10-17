@@ -30,7 +30,7 @@ fn main() {
 
     let ground_material = Arc::new(Lambertian::new(vec3(0.5, 0.5, 0.5)));
 
-    world.add(Box::new(Sphere::new(
+    world.add(Box::new(Sphere::new_stationary(
         vec3(0.0, -1000.0, 0.0),
         1000.0,
         ground_material,
@@ -53,32 +53,62 @@ fn main() {
             );
 
             if (center - vec3(4.0, 0.2, 0.0)).length() > 0.9 {
-                let material: Arc<dyn Material + Sync> = if choose_mat < 0.8 {
+                let sphere_material: Arc<dyn Material + Sync>;
+
+                if choose_mat < 0.8 {
                     let albedo = random_vector() * random_vector();
-                    Arc::new(Lambertian::new(albedo))
-                }else if choose_mat < 0.95 {
-                    let albedo = random_vector_range(0.5, 1.0) ;
+                    sphere_material = Arc::new(Lambertian::new(albedo));
+                    let center2 = center + vec3(0.0, rand::random_range(0.0..=0.5), 0.0);
+                    world.add(Box::new(Sphere::new_moving(
+                        center,
+                        center2,
+                        0.2,
+                        sphere_material.clone(),
+                    )));
+                } else if choose_mat < 0.95 {
+                    let albedo = random_vector_range(0.5, 1.0);
                     let fuzz = rand::random_range(0.0..=0.5);
-                    Arc::new(Metal::new(albedo, fuzz))
+                    sphere_material = Arc::new(Metal::new(albedo, fuzz));
+                    world.add(Box::new(Sphere::new_stationary(
+                        center,
+                        0.2,
+                        sphere_material.clone(),
+                    )));
                 } else {
-                    Arc::new(Dielectric::new(1.5))
+                    sphere_material = Arc::new(Dielectric::new(1.5));
+                    world.add(Box::new(Sphere::new_stationary(
+                        center,
+                        0.2,
+                        sphere_material.clone(),
+                    )));
                 };
-                world.add(Box::new(Sphere::new(center, 0.2, material.clone())));
             }
         }
     }
 
     let material1 = Arc::new(Dielectric::new(1.5));
-    world.add(Box::new(Sphere::new(vec3(0.0, 1.0, 0.0), 1.0, material1)));
+    world.add(Box::new(Sphere::new_stationary(
+        vec3(0.0, 1.0, 0.0),
+        1.0,
+        material1,
+    )));
     let material2 = Arc::new(Lambertian::new(vec3(0.4, 0.2, 0.1)));
-    world.add(Box::new(Sphere::new(vec3(-4.0, 1.0, 0.0), 1.0, material2)));
+    world.add(Box::new(Sphere::new_stationary(
+        vec3(-4.0, 1.0, 0.0),
+        1.0,
+        material2,
+    )));
     let material3 = Arc::new(Metal::new(vec3(0.7, 0.6, 0.5), 0.0));
-    world.add(Box::new(Sphere::new(vec3(4.0, 1.0, 0.0), 1.0, material3)));
+    world.add(Box::new(Sphere::new_stationary(
+        vec3(4.0, 1.0, 0.0),
+        1.0,
+        material3,
+    )));
 
     let mut properties = CameraProperties::default();
 
     properties.aspect_ratio = 16.0 / 9.0;
-    properties.image_width = 1200;
+    properties.image_width = 400;
     properties.samples_per_pixel = 100;
     properties.max_depth = 50;
     properties.v_fov = 20.0;
