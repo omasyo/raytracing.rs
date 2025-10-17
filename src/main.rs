@@ -9,18 +9,16 @@ mod ray;
 mod utils;
 mod window;
 
-use std::f32::consts::PI;
 use crate::buffer::{Buffer, DrawBuffer};
 use crate::camera::{Camera, CameraProperties};
 use crate::color::Color;
 use crate::hittable::hittable_list::HittableList;
 use crate::hittable::sphere::Sphere;
 use crate::image::ppm_image::PpmImage;
-use crate::material::dielectric::Dielectric;
 use crate::material::lambertian::Lambertian;
-use crate::material::metal::Metal;
 use crate::window::{SoftbufferWindow, WindowProperties};
 use glam::vec3;
+use std::f32::consts::PI;
 use std::ops::{Deref, DerefMut};
 use std::sync::Arc;
 use std::thread;
@@ -28,6 +26,24 @@ use winit::event::WindowEvent;
 
 fn main() {
     let (tx, rx) = std::sync::mpsc::channel::<(usize, Color)>(); // row index, pixels
+
+    let properties = CameraProperties::default()
+        .set_aspect_ratio(16.0 / 9.0)
+        .set_image_width(400)
+        .set_samples_per_pixel(100)
+        .set_max_depth(50);
+
+    let camera = Camera::new(properties);
+    let mut buffer = Buffer::new(camera.image_width, camera.image_height);
+
+
+    let properties = WindowProperties {
+        width: camera.image_width as u32,
+        height: camera.image_height as u32,
+        title: "Haha",
+    };
+    // let buffer = buffer.clone();
+    let mut window = SoftbufferWindow::new(properties);
 
     thread::spawn(move || {
         let mut world: HittableList = HittableList::new();
@@ -79,26 +95,9 @@ fn main() {
         //     0.5,
         //     material_right,
         // )));
-
-        let properties = CameraProperties::default()
-            .set_aspect_ratio(16.0 / 9.0)
-            .set_image_width(400)
-            .set_samples_per_pixel(100)
-            .set_max_depth(50);
-
-        let camera = Camera::new(properties);
         camera.render(&world, tx);
     });
 
-    let mut buffer = Buffer::new(400, 25 * 9);
-
-    let properties = WindowProperties {
-        width: 400,
-        height: 25 * 9,
-        title: "Haha",
-    };
-    // let buffer = buffer.clone();
-    let mut window = SoftbufferWindow::new(properties);
     window
         .run(move |window, event| {
             match event {

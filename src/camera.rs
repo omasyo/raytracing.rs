@@ -59,8 +59,8 @@ impl CameraProperties {
 }
 
 pub struct Camera {
-    image_width: usize,
-    image_height: usize,
+    pub image_width: usize,
+    pub image_height: usize,
     center: Vec3,
     pixel00_loc: Vec3,
     pixel_delta_u: Vec3,
