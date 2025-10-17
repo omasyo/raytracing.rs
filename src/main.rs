@@ -7,6 +7,7 @@ mod interval;
 mod utils;
 mod ray;
 mod material;
+mod window;
 
 use crate::buffer::DrawBuffer;
 use crate::camera::{Camera, CameraProperties};

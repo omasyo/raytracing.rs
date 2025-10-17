@@ -1,5 +1,5 @@
 use crate::buffer::{Buffer, DrawBuffer};
-use softbuffer_quickstart::{SoftbufferWindow, WindowProperties};
+use crate::window::{SoftbufferWindow, WindowProperties};
 use std::cmp::min;
 use std::thread;
 use std::time::Duration;
