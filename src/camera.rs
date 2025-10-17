@@ -9,6 +9,7 @@ use crate::utils::random_unit_vector;
 use glam::{Vec3, vec3};
 use rayon::prelude::*;
 use std::cmp::max;
+use std::sync::mpsc::Sender;
 
 pub struct CameraProperties {
     aspect_ratio: f32,
@@ -99,30 +100,24 @@ impl Camera {
         }
     }
 
-    pub fn render(&self, world: &HittableList) -> Buffer {
-        let mut buffer = Buffer::new(self.image_width, self.image_height);
-
-        buffer
-            .data
-            .par_iter_mut()
-            .enumerate()
-            .for_each(|(index, pixel)| {
-                let j = index / self.image_width;
-                let i = index % self.image_width;
-                let mut pixel_color = vec3(0.0, 0.0, 0.0);
-                for _ in 0..self.samples_per_pixel {
-                    let ray = self.get_ray(i as f32, j as f32);
-                    pixel_color += ray_color(&ray, self.max_depth, world);
-                }
-                pixel_color /= self.samples_per_pixel as f32;
-                *pixel = Color::from_vec3(Vec3 {
-                    x: linear_to_gamma(pixel_color.x),
-                    y: linear_to_gamma(pixel_color.y),
-                    z: linear_to_gamma(pixel_color.z),
-                });
+    pub fn render(&self, world: &HittableList, tx: Sender<(usize, Color)>)  {
+        Buffer::new(self.image_width, self.image_height);
+        (0..(self.image_width*self.image_height)).into_par_iter().for_each(|index| {
+            let j = index / self.image_width;
+            let i = index % self.image_width;
+            let mut pixel_color = vec3(0.0, 0.0, 0.0);
+            for _ in 0..self.samples_per_pixel {
+                let ray = self.get_ray(i as f32, j as f32);
+                pixel_color += ray_color(&ray, self.max_depth, world);
+            }
+            pixel_color /= self.samples_per_pixel as f32;
+            let pixel = Color::from_vec3(Vec3 {
+                x: linear_to_gamma(pixel_color.x),
+                y: linear_to_gamma(pixel_color.y),
+                z: linear_to_gamma(pixel_color.z),
             });
-
-        buffer
+            tx.send((index, pixel)).expect("TODO: panic message");
+        });
     }
 
     fn get_ray(&self, i: f32, j: f32) -> Ray {

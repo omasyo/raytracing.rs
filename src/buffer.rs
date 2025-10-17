@@ -3,7 +3,7 @@ use glam::Vec3;
 
 #[derive(Clone)]
 pub struct Buffer {
-  pub  data: Vec<Color>, // for now
+    pub data: Vec<Color>,
     width: usize,
     height: usize,
 }
@@ -37,10 +37,8 @@ impl Buffer {
             z: linear_to_gamma(color.z),
         };
 
-        let ptr =   self.data.as_mut_ptr();
-        unsafe {
-            ptr.add(index).write(Color::from_vec3(color))
-        }
+        let ptr = self.data.as_mut_ptr();
+        unsafe { ptr.add(index).write(Color::from_vec3(color)) }
     }
 
     pub fn width(&self) -> usize {
