@@ -15,24 +15,18 @@ use crate::color::Color;
 use crate::hittable::hittable_list::HittableList;
 use crate::hittable::sphere::Sphere;
 use crate::image::ppm_image::PpmImage;
-use crate::image::window_image::WindowImage;
 use crate::material::dielectric::Dielectric;
 use crate::material::lambertian::Lambertian;
 use crate::material::metal::Metal;
 use crate::window::{SoftbufferWindow, WindowProperties};
 use glam::vec3;
-use std::cmp::min;
-use std::mem::swap;
-use std::ops::DerefMut;
-use std::sync::{Arc, Mutex, RwLock};
+use std::ops::{Deref, DerefMut};
+use std::sync::Arc;
 use std::thread;
+use winit::event::WindowEvent;
 
 fn main() {
-    // let buffer = Arc::new(RwLock::new(Buffer::new(400, 25 * 9)));
-
     let (tx, rx) = std::sync::mpsc::channel::<(usize, Color)>(); // row index, pixels
-
-    // let thread_buffer = buffer.clone();
 
     thread::spawn(move || {
         let mut local = Buffer::new(400, 25 * 9);
@@ -81,10 +75,7 @@ fn main() {
         camera.render(&world, tx);
     });
 
-    // let image = PpmImage::new("image.ppm");
-    // image.draw_buffer(&buffer);
-    // let image = WindowImage::new("raytracing.rs");
-    // image.draw_buffer(&buffer);
+    let mut buffer = Buffer::new(400, 25 * 9);
 
     let properties = WindowProperties {
         width: 400,
@@ -95,26 +86,21 @@ fn main() {
     let mut window = SoftbufferWindow::new(properties);
     window
         .run(move |window, event| {
-            // println!("{:?}", event);
-            // match event {
-            //     // WindowEvent::RedrawRequested => {
-            //     //
-            //     // }
-            //     _ => {}
-            // }
-            // let (width, height) = window.inner_size();
-            // let mut window_buffer = window.buffer_mut();
-            // for j in 0..b.height() {
-            //     for i in 0..b.width() {
-            //         let x = min(i, width - 1);
-            //         let y = min(j, height - 1);
-            //         window_buffer[(y * width) + x] = b.at((y * b.width()) + x).rgb_value();
-            //     }
-            // }
-
-            let mut window_buffer = window.buffer_mut();
-            if let Ok((index, pixel)) = rx.recv() {
-                window_buffer[index] = pixel.rgb_value();
+            match event {
+                WindowEvent::RedrawRequested => {
+                    let mut window_buffer = window.buffer_mut();
+                    if let Ok((index, pixel)) = rx.recv() {
+                        unsafe {
+                            buffer.write_at(index, pixel.clone());
+                        }
+                        window_buffer[index] = pixel.rgb_value();
+                    }
+                }
+                WindowEvent::CloseRequested => {
+                    let image = PpmImage::new("image.ppm");
+                    image.draw_buffer(&buffer);
+                }
+                _ => {}
             }
         })
         .expect("window can't run :(");

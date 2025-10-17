@@ -30,15 +30,9 @@ impl Buffer {
         self.data.push(Color::from_vec3(color));
     }
 
-    pub unsafe fn write_at(&mut self, index: usize, color: Vec3) {
-        let color = Vec3 {
-            x: linear_to_gamma(color.x),
-            y: linear_to_gamma(color.y),
-            z: linear_to_gamma(color.z),
-        };
-
+    pub unsafe fn write_at(&mut self, index: usize, color: Color) {
         let ptr = self.data.as_mut_ptr();
-        unsafe { ptr.add(index).write(Color::from_vec3(color)) }
+        unsafe { ptr.add(index).write(color) }
     }
 
     pub fn width(&self) -> usize {

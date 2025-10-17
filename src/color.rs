@@ -40,4 +40,12 @@ impl Color {
     pub fn rgb_value(&self) -> u32 {
         self.value & 0x00FFFFFF
     }
+
+   pub fn linear_to_gamma(&self) -> Self {
+        Color::new(
+            self.red().isqrt(),
+            self.green().isqrt(),
+            self.blue().isqrt(),
+        )
+    }
 }

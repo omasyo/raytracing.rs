@@ -1,12 +1,12 @@
-use crate::buffer::{Buffer, linear_to_gamma};
+use crate::buffer::{linear_to_gamma, Buffer};
 use crate::color::Color;
-use crate::hittable::Hittable;
 use crate::hittable::hittable_list::HittableList;
+use crate::hittable::Hittable;
 use crate::interval::Interval;
 use crate::material::ScatterResult;
 use crate::ray::Ray;
-use crate::utils::random_unit_vector;
-use glam::{Vec3, vec3};
+use glam::{vec3, Vec3};
+use rand::prelude::SliceRandom;
 use rayon::prelude::*;
 use std::cmp::max;
 use std::sync::mpsc::Sender;
@@ -100,24 +100,27 @@ impl Camera {
         }
     }
 
-    pub fn render(&self, world: &HittableList, tx: Sender<(usize, Color)>)  {
+    pub fn render(&self, world: &HittableList, tx: Sender<(usize, Color)>) {
         Buffer::new(self.image_width, self.image_height);
-        (0..(self.image_width*self.image_height)).into_par_iter().for_each(|index| {
-            let j = index / self.image_width;
-            let i = index % self.image_width;
-            let mut pixel_color = vec3(0.0, 0.0, 0.0);
-            for _ in 0..self.samples_per_pixel {
-                let ray = self.get_ray(i as f32, j as f32);
-                pixel_color += ray_color(&ray, self.max_depth, world);
-            }
-            pixel_color /= self.samples_per_pixel as f32;
-            let pixel = Color::from_vec3(Vec3 {
-                x: linear_to_gamma(pixel_color.x),
-                y: linear_to_gamma(pixel_color.y),
-                z: linear_to_gamma(pixel_color.z),
+        // (0..(self.image_width * self.image_height))
+        shuffled_range(0,self.image_width * self.image_height)
+            .into_par_iter()
+            .for_each(|index| {
+                let j = index / self.image_width;
+                let i = index % self.image_width;
+                let mut pixel_color = vec3(0.0, 0.0, 0.0);
+                for _ in 0..self.samples_per_pixel {
+                    let ray = self.get_ray(i as f32, j as f32);
+                    pixel_color += ray_color(&ray, self.max_depth, world);
+                }
+                pixel_color /= self.samples_per_pixel as f32;
+                let pixel = Color::from_vec3(Vec3 {
+                    x: linear_to_gamma(pixel_color.x),
+                    y: linear_to_gamma(pixel_color.y),
+                    z: linear_to_gamma(pixel_color.z),
+                });
+                tx.send((index, pixel)).expect("TODO: panic message");
             });
-            tx.send((index, pixel)).expect("TODO: panic message");
-        });
     }
 
     fn get_ray(&self, i: f32, j: f32) -> Ray {
@@ -160,4 +163,11 @@ fn ray_color(ray: &Ray, depth: u32, world: &dyn Hittable) -> Vec3 {
     let unit_direction = ray.direction.normalize();
     let a = 0.5 * (unit_direction.y + 1.0);
     (1.0 - a) * vec3(1.0, 1.0, 1.0) + a * vec3(0.5, 0.7, 1.0)
+}
+
+fn shuffled_range(start: usize, end: usize) -> Vec<usize> {
+    assert!(start < end);
+    let mut v: Vec<usize> = (start..end).collect();
+    v.shuffle(&mut rand::rng());
+    v
 }
