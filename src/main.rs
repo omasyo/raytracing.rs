@@ -25,7 +25,7 @@ use std::thread;
 use winit::event::WindowEvent;
 
 fn main() {
-    let (tx, rx) = std::sync::mpsc::channel::<(usize, Color)>(); // row index, pixels
+    let (tx, rx) = std::sync::mpsc::channel::<Buffer>(); // row index, pixels
 
     let properties = CameraProperties::default()
         .set_aspect_ratio(16.0 / 9.0)
@@ -102,13 +102,24 @@ fn main() {
         .run(move |window, event| {
             match event {
                 WindowEvent::RedrawRequested => {
+                    let (width, height) = window.inner_size();
                     let mut window_buffer = window.buffer_mut();
-                    if let Ok((index, pixel)) = rx.recv() {
-                        unsafe {
-                            buffer.write_at(index, pixel.clone());
+
+
+
+                    if let Ok(b) = rx.recv() {
+                        // unsafe {
+                        //     buffer.write_at(index, pixel.clone());
+                        // }
+                        buffer = b.clone();
+                        for (index, pixel) in b.data.iter().enumerate() {
+                            let x = index % b.width;
+                            let y = index / b.width;
+                            let window_index = (y * width) + x;
+                            window_buffer[window_index] = pixel.rgb_value();
                         }
-                        window_buffer[index] = pixel.rgb_value();
                     }
+
                 }
                 WindowEvent::CloseRequested => {
                     let image = PpmImage::new("image.ppm");

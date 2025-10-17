@@ -4,8 +4,8 @@ use glam::Vec3;
 #[derive(Clone)]
 pub struct Buffer {
     pub data: Vec<Color>,
-    width: usize,
-    height: usize,
+    pub width: usize,
+    pub height: usize,
 }
 
 impl Buffer {
