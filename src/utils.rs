@@ -17,12 +17,25 @@ pub fn random_vector_range(min: f32, max: f32) -> Vec3 {
 }
 
 pub fn random_unit_vector() -> Vec3 {
-    // random_vector().normalize() // todo why not this
     loop {
         let p = random_vector_range(-1.0, 1.0);
         let len_sq = p.length_squared();
         if (f32::EPSILON..=1.0).contains(&len_sq) {
             return p / len_sq.sqrt();
+        }
+    }
+}
+
+pub fn random_in_unit_disk() -> Vec3 {
+    loop {
+        let p = Vec3 {
+            x: rand::random_range(0.0..=1.0),
+            y: rand::random_range(0.0..=1.0),
+            z: 0.0,
+        };
+        let len_sq = p.length_squared();
+        if len_sq < 1.0 {
+            return p;
         }
     }
 }

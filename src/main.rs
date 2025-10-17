@@ -36,6 +36,8 @@ fn main() {
     properties.look_at = vec3(0.0, 0.0, -1.0);
     properties.up = vec3(0.0, 1.0, 0.0);
     properties.v_fov = 20.0;
+    properties.defocus_angle = 10.0;
+    properties.focus_dist = 3.4;
 
     let camera = Camera::new(properties);
     let mut buffer = Buffer::new(camera.image_width, camera.image_height);
