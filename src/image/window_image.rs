@@ -1,6 +1,8 @@
 use crate::buffer::{Buffer, DrawBuffer};
 use softbuffer_quickstart::{SoftbufferWindow, WindowProperties};
 use std::cmp::min;
+use std::thread;
+use std::time::Duration;
 use winit::event::WindowEvent;
 
 pub struct WindowImage {
@@ -38,6 +40,12 @@ impl DrawBuffer for WindowImage {
                     //
                     //     buffer[index] = (blue | (green << 8) | (red << 16)).try_into().unwrap();
                     // }
+                    thread::spawn(|| {
+                        for i in 1..10 {
+                            println!("hi number {i} from the spawned thread!");
+                            thread::sleep(Duration::from_millis(1));
+                        }
+                    });
                     for j in 0..buffer.height() {
                         for i in 0..buffer.width() {
                             let x = min(i, width-1);

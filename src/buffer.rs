@@ -1,10 +1,9 @@
-use glam::Vec3;
 use crate::color::Color;
-
+use glam::Vec3;
 
 #[derive(Clone)]
 pub struct Buffer {
-    data: Vec<Color>,
+  pub  data: Vec<Color>, // for now
     width: usize,
     height: usize,
 }
@@ -12,7 +11,7 @@ pub struct Buffer {
 impl Buffer {
     pub fn new(width: usize, height: usize) -> Self {
         Self {
-            data: Vec::with_capacity(width * height),
+            data: vec![Color::new(0, 0, 0); width * height], //Vec::with_capacity(width * height),
             width,
             height,
         }
@@ -22,7 +21,6 @@ impl Buffer {
     //     self.data.push(data);
     // }
 
-    #[allow(unused_attributes)]
     pub fn write(&mut self, color: Vec3) {
         let color = Vec3 {
             x: linear_to_gamma(color.x),
@@ -30,6 +28,19 @@ impl Buffer {
             z: linear_to_gamma(color.z),
         };
         self.data.push(Color::from_vec3(color));
+    }
+
+    pub unsafe fn write_at(&mut self, index: usize, color: Vec3) {
+        let color = Vec3 {
+            x: linear_to_gamma(color.x),
+            y: linear_to_gamma(color.y),
+            z: linear_to_gamma(color.z),
+        };
+
+        let ptr =   self.data.as_mut_ptr();
+        unsafe {
+            ptr.add(index).write(Color::from_vec3(color))
+        }
     }
 
     pub fn width(&self) -> usize {
@@ -48,7 +59,6 @@ impl Buffer {
 pub trait DrawBuffer {
     fn draw_buffer(&self, buffer: &Buffer);
 }
-
 
 pub fn linear_to_gamma(value: f32) -> f32 {
     if value > 0.0 {

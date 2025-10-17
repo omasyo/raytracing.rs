@@ -1,20 +1,24 @@
-use std::rc::Rc;
 use super::{HitRecord, Hittable};
 use crate::interval::Interval;
-use glam::Vec3;
 use crate::material::Material;
 use crate::ray::Ray;
+use glam::Vec3;
+use std::sync::Arc;
 
 pub struct Sphere {
     center: Vec3,
     radius: f32,
-    material: Rc<dyn Material>,
+    material: Arc<dyn Material + Sync>,
 }
 
 impl Sphere {
-    pub fn new(center: Vec3, radius: f32, material: Rc<dyn Material>) -> Sphere {
+    pub fn new(center: Vec3, radius: f32, material: Arc<dyn Material + Sync>) -> Sphere {
         assert!(radius > 0.0);
-        Sphere { center, radius , material }
+        Sphere {
+            center,
+            radius,
+            material,
+        }
     }
 }
 
@@ -48,3 +52,5 @@ impl Hittable for Sphere {
         Some(rec)
     }
 }
+
+unsafe impl Sync for Sphere {}
