@@ -1,25 +1,25 @@
-use crate::buffer::{Buffer, linear_to_gamma};
+use crate::buffer::{linear_to_gamma, Buffer};
 use crate::color::Color;
-use crate::hittable::Hittable;
 use crate::hittable::hittable_list::HittableList;
+use crate::hittable::Hittable;
 use crate::interval::Interval;
 use crate::material::ScatterResult;
 use crate::ray::Ray;
-use glam::{Vec3, vec3};
+use glam::{vec3, Vec3};
 use rand::prelude::SliceRandom;
 use rayon::prelude::*;
-use std::cell::RefCell;
 use std::cmp::max;
-use std::rc::Rc;
 use std::sync::mpsc::Sender;
-use std::sync::{Arc, RwLock};
 
 pub struct CameraProperties {
-    aspect_ratio: f32,
-    image_width: usize,
-    samples_per_pixel: u32,
-    max_depth: u32,
-    fov: f32,
+    pub aspect_ratio: f32,
+    pub image_width: usize,
+    pub samples_per_pixel: u32,
+    pub max_depth: u32,
+    pub v_fov: f32,
+    pub look_from: Vec3,
+    pub look_at: Vec3,
+    pub up: Vec3,
 }
 
 impl Default for CameraProperties {
@@ -29,35 +29,11 @@ impl Default for CameraProperties {
             image_width: 100,
             samples_per_pixel: 10,
             max_depth: 50,
-            fov: 90.0,
+            v_fov: 90.0,
+            look_from: vec3(0.0,0.0, 0.0),
+            look_at: vec3(0.0,0.0, -1.0),
+            up: vec3(0.0,1.0, 0.0),
         }
-    }
-}
-
-impl CameraProperties {
-    pub fn set_aspect_ratio(mut self, aspect_ratio: f32) -> Self {
-        self.aspect_ratio = aspect_ratio;
-        self
-    }
-
-    pub fn set_image_width(mut self, image_width: usize) -> Self {
-        self.image_width = image_width;
-        self
-    }
-
-    pub fn set_samples_per_pixel(mut self, samples_per_pixel: u32) -> Self {
-        self.samples_per_pixel = samples_per_pixel;
-        self
-    }
-
-    pub fn set_max_depth(mut self, max_depth: u32) -> Self {
-        self.max_depth = max_depth;
-        self
-    }
-
-    pub fn set_fov(mut self, fov: f32) -> Self {
-        self.fov = fov;
-        self
     }
 }
 
@@ -70,6 +46,10 @@ pub struct Camera {
     pixel_delta_v: Vec3,
     samples_per_pixel: u32,
     max_depth: u32,
+    focal_length: f32,
+    u: Vec3,
+    v: Vec3,
+    w: Vec3,
 }
 
 impl Camera {
@@ -82,22 +62,26 @@ impl Camera {
         let image_height = (image_width as f32 / aspect_ratio) as usize;
         let image_height = max(image_height, 1);
 
-        let center = vec3(0.0, 0.0, 0.0);
+        let center = properties.look_from;
 
-        let focal_length = 1.0;
-        let theta = properties.fov.to_radians();
+        let focal_length = (properties.look_from - properties.look_at).length();
+        let theta = properties.v_fov.to_radians();
         let h = (theta / 2.0).tan();
         let viewport_height = 2.0 * h * focal_length;
         let viewport_width = viewport_height * (image_width as f32 / image_height as f32);
 
-        let viewport_u = vec3(viewport_width, 0.0, 0.0);
-        let viewport_v = vec3(0.0, -viewport_height, 0.0);
+        let w = (properties.look_from - properties.look_at).normalize();
+        let u = properties.up.cross(w).normalize();
+        let v = w.cross(u).normalize();
+
+        let viewport_u = viewport_width * u;
+        let viewport_v = viewport_height * -v;
 
         let pixel_delta_u = viewport_u / (image_width as f32);
         let pixel_delta_v = viewport_v / (image_height as f32);
 
         let viewport_upper_left =
-            center - vec3(0.0, 0.0, focal_length) - (viewport_u / 2.0) - (viewport_v / 2.0);
+            center -(focal_length * w) - (viewport_u / 2.0) - (viewport_v / 2.0);
         let pixel00_loc = viewport_upper_left + 0.5 * (pixel_delta_u + pixel_delta_v);
 
         Self {
@@ -109,6 +93,10 @@ impl Camera {
             pixel_delta_v,
             samples_per_pixel,
             max_depth,
+            focal_length,
+            u,
+            v,
+            w,
         }
     }
 
@@ -136,7 +124,8 @@ impl Camera {
                         z: linear_to_gamma(pixel_color.z),
                     }/*)*/;
                     let old_color = pixel.to_vec3();
-                    let color = (old_color * (loop_count-1.0)/loop_count) + (new_color * (1.0/loop_count));
+                    let color = (old_color * (loop_count - 1.0) / loop_count)
+                        + (new_color * (1.0 / loop_count));
                     *pixel = Color::from_vec3(color);
                 });
             println!("Loop {loop_count}");
