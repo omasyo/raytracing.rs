@@ -1,11 +1,11 @@
-use crate::buffer::{linear_to_gamma, Buffer};
+use crate::buffer::{Buffer, linear_to_gamma};
 use crate::color::Color;
-use crate::hittable::hittable_list::HittableList;
 use crate::hittable::Hittable;
+use crate::hittable::hittable_list::HittableList;
 use crate::interval::Interval;
 use crate::material::ScatterResult;
 use crate::ray::Ray;
-use glam::{vec3, Vec3};
+use glam::{Vec3, vec3};
 use rand::prelude::SliceRandom;
 use rayon::prelude::*;
 use std::cmp::max;
@@ -16,6 +16,7 @@ pub struct CameraProperties {
     image_width: usize,
     samples_per_pixel: u32,
     max_depth: u32,
+    fov: f32,
 }
 
 impl Default for CameraProperties {
@@ -25,6 +26,7 @@ impl Default for CameraProperties {
             image_width: 100,
             samples_per_pixel: 10,
             max_depth: 50,
+            fov: 90.0,
         }
     }
 }
@@ -47,6 +49,11 @@ impl CameraProperties {
 
     pub fn set_max_depth(mut self, max_depth: u32) -> Self {
         self.max_depth = max_depth;
+        self
+    }
+
+    pub fn set_fov(mut self, fov: f32) -> Self {
+        self.fov = fov;
         self
     }
 }
@@ -75,7 +82,9 @@ impl Camera {
         let center = vec3(0.0, 0.0, 0.0);
 
         let focal_length = 1.0;
-        let viewport_height = 2.0;
+        let theta = properties.fov.to_radians();
+        let h = (theta / 2.0).tan();
+        let viewport_height = 2.0 * h * focal_length;
         let viewport_width = viewport_height * (image_width as f32 / image_height as f32);
 
         let viewport_u = vec3(viewport_width, 0.0, 0.0);
@@ -103,7 +112,7 @@ impl Camera {
     pub fn render(&self, world: &HittableList, tx: Sender<(usize, Color)>) {
         Buffer::new(self.image_width, self.image_height);
         // (0..(self.image_width * self.image_height))
-        shuffled_range(0,self.image_width * self.image_height)
+        shuffled_range(0, self.image_width * self.image_height)
             .into_par_iter()
             .for_each(|index| {
                 let j = index / self.image_width;

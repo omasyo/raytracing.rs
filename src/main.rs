@@ -9,6 +9,7 @@ mod ray;
 mod utils;
 mod window;
 
+use std::f32::consts::PI;
 use crate::buffer::{Buffer, DrawBuffer};
 use crate::camera::{Camera, CameraProperties};
 use crate::color::Color;
@@ -29,41 +30,55 @@ fn main() {
     let (tx, rx) = std::sync::mpsc::channel::<(usize, Color)>(); // row index, pixels
 
     thread::spawn(move || {
-        let mut local = Buffer::new(400, 25 * 9);
-
         let mut world: HittableList = HittableList::new();
 
-        let material_ground = Arc::new(Lambertian::new(vec3(0.8, 0.8, 0.0)));
-        let material_center = Arc::new(Lambertian::new(vec3(0.1, 0.2, 0.5)));
-        let material_left = Arc::new(Dielectric::new(1.5));
-        let material_bubble = Arc::new(Dielectric::new(1.0 / 1.5));
-        let material_right = Arc::new(Metal::new(vec3(0.8, 0.6, 0.2), 1.0));
+        // let material_ground = Arc::new(Lambertian::new(vec3(0.8, 0.8, 0.0)));
+        // let material_center = Arc::new(Lambertian::new(vec3(0.1, 0.2, 0.5)));
+        // let material_left = Arc::new(Dielectric::new(1.5));
+        // let material_bubble = Arc::new(Dielectric::new(1.0 / 1.5));
+        // let material_right = Arc::new(Metal::new(vec3(0.8, 0.6, 0.2), 1.0));
+
+        let r = (PI/4.0).cos();
+
+        let material_left = Arc::new(Lambertian::new(vec3(0.0, 0.0, 1.0)));
+        let material_right = Arc::new(Lambertian::new(vec3(1.0, 0.0, 0.0)));
 
         world.add(Box::new(Sphere::new(
-            vec3(0.0, -100.5, -1.0),
-            100.0,
-            material_ground,
-        )));
-        world.add(Box::new(Sphere::new(
-            vec3(0.0, 0.0, -1.2),
-            0.5,
-            material_center,
-        )));
-        world.add(Box::new(Sphere::new(
-            vec3(-1.0, 0.0, -1.0),
-            0.5,
+            vec3(-r, 0.0, -1.0),
+            r,
             material_left,
         )));
         world.add(Box::new(Sphere::new(
-            vec3(-1.0, 0.0, -1.0),
-            0.4,
-            material_bubble,
-        )));
-        world.add(Box::new(Sphere::new(
-            vec3(1.0, 0.0, -1.0),
-            0.5,
+            vec3(r, 0.0, -1.0),
+            r,
             material_right,
         )));
+
+        // world.add(Box::new(Sphere::new(
+        //     vec3(0.0, -100.5, -1.0),
+        //     100.0,
+        //     material_ground,
+        // )));
+        // world.add(Box::new(Sphere::new(
+        //     vec3(0.0, 0.0, -1.2),
+        //     0.5,
+        //     material_center,
+        // )));
+        // world.add(Box::new(Sphere::new(
+        //     vec3(-1.0, 0.0, -1.0),
+        //     0.5,
+        //     material_left,
+        // )));
+        // world.add(Box::new(Sphere::new(
+        //     vec3(-1.0, 0.0, -1.0),
+        //     0.4,
+        //     material_bubble,
+        // )));
+        // world.add(Box::new(Sphere::new(
+        //     vec3(1.0, 0.0, -1.0),
+        //     0.5,
+        //     material_right,
+        // )));
 
         let properties = CameraProperties::default()
             .set_aspect_ratio(16.0 / 9.0)
