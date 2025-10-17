@@ -24,6 +24,11 @@ impl Buffer {
 
     #[allow(unused_attributes)]
     pub fn write(&mut self, color: Vec3) {
+        let color = Vec3 {
+            x: linear_to_gamma(color.x),
+            y: linear_to_gamma(color.y),
+            z: linear_to_gamma(color.z),
+        };
         self.data.push(Color::from_vec3(color));
     }
 
@@ -42,4 +47,12 @@ impl Buffer {
 
 pub trait DrawBuffer {
     fn draw_buffer(&self, buffer: &Buffer);
+}
+
+
+pub fn linear_to_gamma(value: f32) -> f32 {
+    if value > 0.0 {
+        return value.sqrt();
+    }
+    0.0
 }

@@ -1,8 +1,10 @@
-use crate::Ray;
 use crate::buffer::Buffer;
 use crate::hittable::Hittable;
 use crate::hittable::hittable_list::HittableList;
 use crate::interval::Interval;
+use crate::material::ScatterResult;
+use crate::ray::Ray;
+use crate::utils::random_unit_vector;
 use glam::{Vec3, vec3};
 use std::cmp::max;
 
@@ -10,6 +12,7 @@ pub struct CameraProperties {
     aspect_ratio: f32,
     image_width: usize,
     samples_per_pixel: u32,
+    max_depth: u32,
 }
 
 impl Default for CameraProperties {
@@ -18,6 +21,7 @@ impl Default for CameraProperties {
             aspect_ratio: 1.0,
             image_width: 100,
             samples_per_pixel: 10,
+            max_depth: 50,
         }
     }
 }
@@ -37,6 +41,11 @@ impl CameraProperties {
         self.samples_per_pixel = samples_per_pixel;
         self
     }
+
+    pub fn set_max_depth(mut self, max_depth: u32) -> Self {
+        self.max_depth = max_depth;
+        self
+    }
 }
 
 pub struct Camera {
@@ -47,6 +56,7 @@ pub struct Camera {
     pixel_delta_u: Vec3,
     pixel_delta_v: Vec3,
     samples_per_pixel: u32,
+    max_depth: u32,
 }
 
 impl Camera {
@@ -54,6 +64,7 @@ impl Camera {
         let aspect_ratio = properties.aspect_ratio;
         let image_width = properties.image_width;
         let samples_per_pixel = properties.samples_per_pixel;
+        let max_depth = properties.max_depth;
 
         let image_height = (image_width as f32 / aspect_ratio) as usize;
         let image_height = max(image_height, 1);
@@ -82,6 +93,7 @@ impl Camera {
             pixel_delta_u,
             pixel_delta_v,
             samples_per_pixel,
+            max_depth,
         }
     }
 
@@ -94,7 +106,7 @@ impl Camera {
                 let mut pixel_color = vec3(0.0, 0.0, 0.0);
                 for _ in 0..self.samples_per_pixel {
                     let ray = self.get_ray(i as f32, j as f32);
-                    pixel_color += ray_color(&ray, world);
+                    pixel_color += ray_color(&ray, self.max_depth, world);
                 }
                 pixel_color /= self.samples_per_pixel as f32;
                 buffer.write(pixel_color);
@@ -119,15 +131,27 @@ impl Camera {
 
 fn sample_square() -> Vec3 {
     Vec3::new(
-        rand::random_range(0.0..1.0) - 0.5,
-        rand::random_range(0.0..1.0) - 0.5,
+        rand::random_range(0.0..=1.0) - 0.5,
+        rand::random_range(0.0..=1.0) - 0.5,
         0.0,
     )
 }
 
-fn ray_color(ray: &Ray, world: &dyn Hittable) -> Vec3 {
-    if let Some(rec) = world.hit(ray, Interval::new(0.0, f32::INFINITY)) {
-       return 0.5 * (rec.normal + vec3(1.0, 1.0, 1.0));
+fn ray_color(ray: &Ray, depth: u32, world: &dyn Hittable) -> Vec3 {
+    if depth <= 0 {
+        return vec3(0.0, 0.0, 0.0);
+    }
+
+    if let Some(rec) = world.hit(ray, Interval::new(0.0001, f32::INFINITY)) {
+        if let Some(ScatterResult {
+            attenuation,
+            scattered,
+        }) = rec.material.scatter(ray, &rec)
+        {
+            return attenuation * ray_color(&scattered, depth - 1, world);
+        }
+        return vec3(0.0, 0.0, 0.0);
+
     }
 
     let unit_direction = ray.direction.normalize();

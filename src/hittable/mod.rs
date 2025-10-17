@@ -1,20 +1,22 @@
 pub mod hittable_list;
 pub mod sphere;
 
-use crate::Ray;
+use std::rc::Rc;
 use crate::interval::Interval;
 use glam::Vec3;
+use crate::material::Material;
+use crate::ray::Ray;
 
-#[derive(Default)]
 pub struct HitRecord {
-    point: Vec3,
+    pub point: Vec3,
     pub normal: Vec3,
-    t: f32,
+    pub material: Rc<dyn Material>,
+    pub t: f32,
     front_face: bool,
 }
 
 impl HitRecord {
-    fn new(point: Vec3, t: f32, ray: &Ray, outward_normal: Vec3) -> Self {
+    fn new(point: Vec3, t: f32, ray: &Ray, outward_normal: Vec3, material: Rc<dyn Material>) -> Self {
         let front_face = ray.direction.dot(outward_normal) < 0.0;
         let normal = if front_face {
             outward_normal
@@ -25,6 +27,7 @@ impl HitRecord {
         Self {
             point,
             normal,
+            material,
             t,
             front_face,
         }

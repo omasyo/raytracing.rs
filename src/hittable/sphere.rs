@@ -1,17 +1,20 @@
-use crate::hittable::{HitRecord, Hittable};
+use std::rc::Rc;
+use super::{HitRecord, Hittable};
 use crate::interval::Interval;
-use crate::Ray;
 use glam::Vec3;
+use crate::material::Material;
+use crate::ray::Ray;
 
 pub struct Sphere {
     center: Vec3,
     radius: f32,
+    material: Rc<dyn Material>,
 }
 
 impl Sphere {
-    pub fn new(center: Vec3, radius: f32) -> Sphere {
+    pub fn new(center: Vec3, radius: f32, material: Rc<dyn Material>) -> Sphere {
         assert!(radius > 0.0);
-        Sphere { center, radius }
+        Sphere { center, radius , material }
     }
 }
 
@@ -27,7 +30,7 @@ impl Hittable for Sphere {
         if discriminant < 0.0 {
             return None;
         }
-        
+
         let sqrt_d = discriminant.sqrt();
 
         let mut root = (h - sqrt_d) / a;
@@ -40,7 +43,7 @@ impl Hittable for Sphere {
         let point = ray.at(root);
         let outward_normal = (point - self.center) / self.radius;
 
-        let rec = HitRecord::new(point, root, ray, outward_normal);
+        let rec = HitRecord::new(point, root, ray, outward_normal, self.material.clone());
 
         Some(rec)
     }

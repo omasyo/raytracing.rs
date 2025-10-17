@@ -1,6 +1,6 @@
-use crate::hittable::{HitRecord, Hittable};
+use super::{HitRecord, Hittable};
 use crate::interval::Interval;
-use crate::Ray;
+use crate::ray::Ray;
 
 pub struct HittableList {
     pub objects: Vec<Box<dyn Hittable>>,
