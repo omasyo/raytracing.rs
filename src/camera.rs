@@ -63,8 +63,7 @@ impl Camera {
     pub fn new(properties: CameraProperties) -> Self {
         let aspect_ratio = properties.aspect_ratio;
         let image_width = properties.image_width;
-        let samples_per_pixel = properties.samples_per_pixel;
-        let max_depth = properties.max_depth;
+        let defocus_angle = properties.defocus_angle;
 
         let image_height = (image_width as f32 / aspect_ratio) as usize;
         let image_height = max(image_height, 1);
@@ -91,7 +90,7 @@ impl Camera {
         let pixel00_loc = viewport_upper_left + 0.5 * (pixel_delta_u + pixel_delta_v);
 
         let defocus_radius =
-            properties.focus_dist * (properties.defocus_angle / 2.0).to_radians().tan();
+            properties.focus_dist * (defocus_angle / 2.0).to_radians().tan();
         let defocus_disk_u = u * defocus_radius;
         let defocus_disk_v = v * defocus_radius;
 
@@ -102,8 +101,8 @@ impl Camera {
             pixel00_loc,
             pixel_delta_u,
             pixel_delta_v,
-            samples_per_pixel,
-            max_depth,
+            samples_per_pixel: properties.samples_per_pixel,
+            max_depth: properties.max_depth,
             u,
             v,
             w,
