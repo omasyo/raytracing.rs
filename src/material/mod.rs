@@ -1,5 +1,6 @@
 pub mod lambertian;
 pub mod metal;
+pub mod dielectric;
 
 use crate::hittable::HitRecord;
 use crate::ray::Ray;

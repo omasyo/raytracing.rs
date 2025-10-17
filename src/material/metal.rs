@@ -11,7 +11,7 @@ pub struct Metal{
 
 impl Metal {
     pub fn new(albedo: Vec3, fuzz: f32) -> Self {
-        assert!(fuzz > 0.0 && fuzz < 1.0);
+        assert!(0.0 <= fuzz && fuzz <= 1.0);
         Self { albedo, fuzz }
     }
 }
