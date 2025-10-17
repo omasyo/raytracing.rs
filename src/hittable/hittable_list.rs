@@ -43,3 +43,5 @@ impl Hittable for HittableList {
         rec
     }
 }
+
+unsafe impl Send for HittableList {}

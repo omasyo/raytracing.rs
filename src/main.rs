@@ -14,9 +14,11 @@ use crate::camera::{Camera, CameraProperties};
 use crate::hittable::hittable_list::HittableList;
 use crate::hittable::sphere::Sphere;
 use crate::image::ppm_image::PpmImage;
+use crate::material::Material;
 use crate::material::dielectric::Dielectric;
 use crate::material::lambertian::Lambertian;
 use crate::material::metal::Metal;
+use crate::utils::{random_vector, random_vector_range};
 use crate::window::{SoftbufferWindow, WindowProperties};
 use glam::vec3;
 use std::sync::Arc;
@@ -24,7 +26,54 @@ use std::thread;
 use winit::event::WindowEvent;
 
 fn main() {
-    let (tx, rx) = std::sync::mpsc::channel::<Buffer>(); // row index, pixels
+    let mut world: HittableList = HittableList::new();
+
+    let ground_material = Arc::new(Lambertian::new(vec3(0.5, 0.5, 0.5)));
+
+    world.add(Box::new(Sphere::new(
+        vec3(0.0, -1000.0, 0.0),
+        1000.0,
+        ground_material,
+    )));
+
+    let material_center = Arc::new(Lambertian::new(vec3(0.1, 0.2, 0.5)));
+    let material_left = Arc::new(Dielectric::new(1.5));
+    let material_bubble = Arc::new(Dielectric::new(1.0 / 1.5));
+    let material_right = Arc::new(Metal::new(vec3(0.8, 0.6, 0.2), 1.0));
+
+    for a in -11..11 {
+        for b in -11..11 {
+            let a = a as f32;
+            let b = b as f32;
+            let choose_mat = rand::random::<f32>();
+            let center = vec3(
+                a + 0.9 * rand::random::<f32>(),
+                0.2,
+                b + 0.9 * rand::random::<f32>(),
+            );
+
+            if (center - vec3(4.0, 0.2, 0.0)).length() > 0.9 {
+                let material: Arc<dyn Material + Sync> = if choose_mat < 0.8 {
+                    let albedo = random_vector() * random_vector();
+                    Arc::new(Lambertian::new(albedo))
+                }else if choose_mat < 0.95 {
+                    let albedo = random_vector_range(0.5, 1.0) ;
+                    let fuzz = rand::random_range(0.0..=0.5);
+                    Arc::new(Metal::new(albedo, fuzz))
+                } else {
+                    Arc::new(Dielectric::new(1.5))
+                };
+                world.add(Box::new(Sphere::new(center, 0.2, material.clone())));
+            }
+        }
+    }
+
+    let material1 = Arc::new(Dielectric::new(1.5));
+    world.add(Box::new(Sphere::new(vec3(0.0, 1.0, 0.0), 1.0, material1)));
+    let material2 = Arc::new(Lambertian::new(vec3(0.4, 0.2, 0.1)));
+    world.add(Box::new(Sphere::new(vec3(-4.0, 1.0, 0.0), 1.0, material2)));
+    let material3 = Arc::new(Metal::new(vec3(0.7, 0.6, 0.5), 0.0));
+    world.add(Box::new(Sphere::new(vec3(4.0, 1.0, 0.0), 1.0, material3)));
 
     let mut properties = CameraProperties::default();
 
@@ -32,12 +81,12 @@ fn main() {
     properties.image_width = 1200;
     properties.samples_per_pixel = 100;
     properties.max_depth = 50;
-    properties.look_from = vec3(-2.0, 2.0, 1.0);
+    properties.v_fov = 20.0;
+    properties.look_from = vec3(13.0, 2.0, 3.0);
     properties.look_at = vec3(0.0, 0.0, -1.0);
     properties.up = vec3(0.0, 1.0, 0.0);
-    properties.v_fov = 20.0;
-    properties.defocus_angle = 10.0;
-    properties.focus_dist = 3.4;
+    properties.defocus_angle = 0.6;
+    properties.focus_dist = 10.0;
 
     let camera = Camera::new(properties);
     let mut buffer = Buffer::new(camera.image_width, camera.image_height);
@@ -50,40 +99,8 @@ fn main() {
     // let buffer = buffer.clone();
     let mut window = SoftbufferWindow::new(properties);
 
+    let (tx, rx) = std::sync::mpsc::channel::<Buffer>(); // row index, pixels
     thread::spawn(move || {
-        let mut world: HittableList = HittableList::new();
-
-        let material_ground = Arc::new(Lambertian::new(vec3(0.8, 0.8, 0.0)));
-        let material_center = Arc::new(Lambertian::new(vec3(0.1, 0.2, 0.5)));
-        let material_left = Arc::new(Dielectric::new(1.5));
-        let material_bubble = Arc::new(Dielectric::new(1.0 / 1.5));
-        let material_right = Arc::new(Metal::new(vec3(0.8, 0.6, 0.2), 1.0));
-
-        world.add(Box::new(Sphere::new(
-            vec3(0.0, -100.5, -1.0),
-            100.0,
-            material_ground,
-        )));
-        world.add(Box::new(Sphere::new(
-            vec3(0.0, 0.0, -1.2),
-            0.5,
-            material_center,
-        )));
-        world.add(Box::new(Sphere::new(
-            vec3(-1.0, 0.0, -1.0),
-            0.5,
-            material_left,
-        )));
-        world.add(Box::new(Sphere::new(
-            vec3(-1.0, 0.0, -1.0),
-            0.4,
-            material_bubble,
-        )));
-        world.add(Box::new(Sphere::new(
-            vec3(1.0, 0.0, -1.0),
-            0.5,
-            material_right,
-        )));
         camera.render(&world, tx);
     });
 
