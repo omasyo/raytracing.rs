@@ -1,12 +1,12 @@
-use crate::buffer::{linear_to_gamma, Buffer};
-use crate::color::Color;
-use crate::hittable::hittable_list::HittableList;
+use crate::buffer::{Buffer};
+use crate::color::{Color, linear_to_gamma};
 use crate::hittable::Hittable;
+use crate::hittable::hittable_list::HittableList;
 use crate::interval::Interval;
 use crate::material::ScatterResult;
 use crate::ray::Ray;
 use crate::utils::random_in_unit_disk;
-use glam::{vec3, Vec3};
+use glam::{Vec3, vec3};
 use rayon::prelude::*;
 use std::cmp::max;
 use std::sync::mpsc::Sender;
@@ -88,8 +88,7 @@ impl Camera {
             center - (properties.focus_dist * w) - (viewport_u / 2.0) - (viewport_v / 2.0);
         let pixel00_loc = viewport_upper_left + 0.5 * (pixel_delta_u + pixel_delta_v);
 
-        let defocus_radius =
-            properties.focus_dist * (defocus_angle / 2.0).to_radians().tan();
+        let defocus_radius = properties.focus_dist * (defocus_angle / 2.0).to_radians().tan();
         let defocus_disk_u = u * defocus_radius;
         let defocus_disk_v = v * defocus_radius;
 
@@ -126,21 +125,19 @@ impl Camera {
                 .for_each(|(index, pixel)| {
                     let j = index / self.image_width;
                     let i = index % self.image_width;
-                    // let mut pixel_color = vec3(0.0, 0.0, 0.0);
-                    // for _ in 0..self.samples_per_pixel {
+
                     let ray = self.get_ray(i as f32, j as f32);
                     let pixel_color = ray_color(&ray, self.max_depth, world);
-                    // }
-                    // pixel_color /= self.samples_per_pixel as f32;
-                    let new_color =/* Color::from_vec3(*/Vec3 {
+
+                    let new_color = Vec3 {
                         x: linear_to_gamma(pixel_color.x),
                         y: linear_to_gamma(pixel_color.y),
                         z: linear_to_gamma(pixel_color.z),
-                    }/*)*/;
-                    let old_color = pixel.to_vec3();
+                    };
+                    let old_color = pixel.vec3();
                     let color = (old_color * (loop_count - 1.0) / loop_count)
                         + (new_color * (1.0 / loop_count));
-                    *pixel = Color::from_vec3(color);
+                    *pixel = Color::new(color);
                 });
 
             let elapsed = now.elapsed();
@@ -148,29 +145,6 @@ impl Camera {
             loop_count = loop_count + 1.0;
             tx.send(buffer.clone()).unwrap();
         }
-
-        // (0..(self.image_width * self.image_height))
-        // shuffled_range(0, self.image_width * self.image_height)
-        //     .into_par_iter()
-        //     .for_each(|index| {
-        //         let j = index / self.image_width;
-        //         let i = index % self.image_width;
-        //         let mut pixel_color = vec3(0.0, 0.0, 0.0);
-        //         for _ in 0..self.samples_per_pixel {
-        //             let ray = self.get_ray(i as f32, j as f32);
-        //             pixel_color += ray_color(&ray, self.max_depth, world);
-        //         }
-        //         pixel_color /= self.samples_per_pixel as f32;
-        //         let pixel = Color::from_vec3(Vec3 {
-        //             x: linear_to_gamma(pixel_color.x),
-        //             y: linear_to_gamma(pixel_color.y),
-        //             z: linear_to_gamma(pixel_color.z),
-        //         });
-        //         unsafe {
-        //             buffer.write().unwrap().write_at(index, pixel);
-        //         }
-        //         tx.send(buffer.read().unwrap().clone()).expect("TODO: panic message");
-        //     });
     }
 
     fn get_ray(&self, i: f32, j: f32) -> Ray {

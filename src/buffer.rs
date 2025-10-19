@@ -1,3 +1,4 @@
+use glam::Vec3;
 use crate::color::Color;
 
 #[derive(Clone)]
@@ -10,7 +11,7 @@ pub struct Buffer {
 impl Buffer {
     pub fn new(width: usize, height: usize) -> Self {
         Self {
-            data: vec![Color::new(0, 0, 0); width * height], //Vec::with_capacity(width * height),
+            data: vec![Color::new(Vec3::ZERO); width * height], //Vec::with_capacity(width * height),
             width,
             height,
         }
@@ -31,11 +32,4 @@ impl Buffer {
 
 pub trait DrawBuffer {
     fn draw_buffer(&self, buffer: &Buffer);
-}
-
-pub fn linear_to_gamma(value: f32) -> f32 {
-    if value > 0.0 {
-        return value.sqrt();
-    }
-    0.0
 }
