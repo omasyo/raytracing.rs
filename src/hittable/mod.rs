@@ -1,3 +1,5 @@
+pub mod aabb;
+pub mod bvh;
 pub mod hittable_list;
 pub mod sphere;
 
@@ -6,6 +8,7 @@ use crate::material::Material;
 use crate::ray::Ray;
 use glam::Vec3;
 use std::sync::Arc;
+use crate::hittable::aabb::Aabb;
 
 pub struct HitRecord {
     pub point: Vec3,
@@ -42,4 +45,9 @@ impl HitRecord {
 
 pub trait Hittable: Sync + Send {
     fn hit(&self, r: &Ray, ray_interval: Interval) -> Option<HitRecord>;
+
+
+    fn bounding_box(&self) -> &Aabb {
+        &Aabb::EMPTY
+    }
 }

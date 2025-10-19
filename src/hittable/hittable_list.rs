@@ -1,15 +1,20 @@
-use std::sync::Arc;
 use super::{HitRecord, Hittable};
+use crate::hittable::aabb::Aabb;
 use crate::interval::Interval;
 use crate::ray::Ray;
+use std::sync::Arc;
 
 pub struct HittableList {
     pub objects: Vec<Arc<dyn Hittable>>,
+    bounding_box: Aabb,
 }
 
 impl HittableList {
     pub fn new() -> HittableList {
-        HittableList { objects: vec![] }
+        HittableList {
+            objects: vec![],
+            bounding_box: Aabb::EMPTY,
+        }
     }
 
     pub fn clear(&mut self) {
@@ -17,13 +22,16 @@ impl HittableList {
     }
 
     pub fn add(&mut self, hittable: Arc<dyn Hittable>) {
+        self.bounding_box = Aabb::from((self.bounding_box(), hittable.bounding_box()));
         self.objects.push(hittable)
     }
 }
 
-impl From<Vec<Arc<dyn Hittable>>> for HittableList {
-    fn from(value: Vec<Arc<dyn Hittable>>) -> Self {
-        HittableList { objects: value }
+impl From<Arc<dyn Hittable>> for HittableList {
+    fn from(hittable: Arc<dyn Hittable>) -> Self {
+        let mut list = Self::new();
+        list.add(hittable);
+        list
     }
 }
 

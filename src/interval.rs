@@ -65,7 +65,7 @@ impl From<(&Interval, &Interval)> for Interval {
     fn from((a, b): (&Interval, &Interval)) -> Self {
         Self {
             min: a.min.min(b.min),
-            max: a.max.min(b.max),
+            max: a.max.max(b.max),
         }
     }
 }

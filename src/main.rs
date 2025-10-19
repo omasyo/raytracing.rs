@@ -11,6 +11,8 @@ mod window;
 
 use crate::buffer::{Buffer, DrawBuffer};
 use crate::camera::{Camera, CameraProperties};
+use crate::hittable::Hittable;
+use crate::hittable::bvh::BvhNode;
 use crate::hittable::hittable_list::HittableList;
 use crate::hittable::sphere::Sphere;
 use crate::image::ppm_image::PpmImage;
@@ -46,10 +48,10 @@ fn main() {
                 0.2,
                 b + 0.9 * rand::random::<f32>(),
             );
-    
+
             if (center - vec3(4.0, 0.2, 0.0)).length() > 0.9 {
                 let sphere_material: Arc<dyn Material + Sync>;
-    
+
                 if choose_mat < 0.8 {
                     let albedo = random_vector() * random_vector();
                     sphere_material = Arc::new(Lambertian::new(albedo));
@@ -80,7 +82,7 @@ fn main() {
             }
         }
     }
-    
+
     let material1 = Arc::new(Dielectric::new(1.5));
     world.add(Arc::new(Sphere::new_stationary(
         vec3(0.0, 1.0, 0.0),
@@ -99,9 +101,11 @@ fn main() {
         1.0,
         material3,
     )));
-    
+
+    let world = HittableList::from(Arc::new(BvhNode::from(world)) as Arc<dyn Hittable>);
+
     let mut properties = CameraProperties::default();
-    
+
     properties.aspect_ratio = 16.0 / 9.0;
     properties.image_width = 400;
     properties.samples_per_pixel = 100;
@@ -112,10 +116,10 @@ fn main() {
     properties.up = vec3(0.0, 1.0, 0.0);
     properties.defocus_angle = 0.6;
     properties.focus_dist = 10.0;
-    
+
     let camera = Camera::new(properties);
     let mut buffer = Buffer::new(camera.image_width, camera.image_height);
-    
+
     let properties = WindowProperties {
         width: camera.image_width as u32,
         height: camera.image_height as u32,
@@ -123,19 +127,19 @@ fn main() {
     };
     // let buffer = buffer.clone();
     let mut window = SoftbufferWindow::new(properties);
-    
+
     let (tx, rx) = std::sync::mpsc::channel::<Buffer>(); // row index, pixels
     thread::spawn(move || {
         camera.render(&world, tx);
     });
-    
+
     window
         .run(move |window, event| {
             match event {
                 WindowEvent::RedrawRequested => {
                     let (width, _height) = window.inner_size();
                     let mut window_buffer = window.buffer_mut();
-    
+
                     if let Ok(b) = rx.recv() {
                         // unsafe {
                         //     buffer.write_at(index, pixel.clone());
