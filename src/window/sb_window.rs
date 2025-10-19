@@ -1,13 +1,10 @@
-use std::num::NonZeroU32;
+use crate::window::{close, init, redraw, resize, run, RawSurface, RawWindow, WindowProperties};
 use std::rc::Rc;
-use softbuffer::Surface;
 use winit::application::ApplicationHandler;
-use winit::dpi::PhysicalSize;
 use winit::error::EventLoopError;
 use winit::event::WindowEvent;
-use winit::event_loop::{ActiveEventLoop, ControlFlow, EventLoop};
+use winit::event_loop::ActiveEventLoop;
 use winit::window::{Window, WindowId};
-use crate::window::{close, init, redraw, resize, run, RawSurface, RawWindow, WindowProperties};
 
 /// Wrapper for Softbuffer and a Winit window.
 pub struct SoftbufferWindow {
@@ -90,10 +87,5 @@ impl SoftbufferWindow {
     /// Gets a mutable reference to the buffer
     pub fn buffer_mut(&mut self) -> softbuffer::Buffer<'_, Rc<Window>, Rc<Window>> {
         self.surface.as_mut().unwrap().buffer_mut().unwrap()
-    }
-
-    /// Gets a mutable reference to the window
-    pub fn window_mut(&mut self) -> Rc<Window> {
-        self.window.clone().unwrap()
     }
 }

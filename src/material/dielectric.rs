@@ -1,7 +1,7 @@
 use crate::hittable::HitRecord;
 use crate::material::{Material, ScatterResult};
 use crate::ray::Ray;
-use glam::{Vec3, vec3};
+use glam::vec3;
 
 pub struct Dielectric {
     refraction_index: f32,

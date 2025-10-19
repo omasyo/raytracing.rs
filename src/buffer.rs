@@ -1,5 +1,4 @@
 use crate::color::Color;
-use glam::Vec3;
 
 #[derive(Clone)]
 pub struct Buffer {
@@ -15,24 +14,6 @@ impl Buffer {
             width,
             height,
         }
-    }
-
-    // pub fn push(&mut self, data: Color) {
-    //     self.data.push(data);
-    // }
-
-    pub fn write(&mut self, color: Vec3) {
-        let color = Vec3 {
-            x: linear_to_gamma(color.x),
-            y: linear_to_gamma(color.y),
-            z: linear_to_gamma(color.z),
-        };
-        self.data.push(Color::from_vec3(color));
-    }
-
-    pub unsafe fn write_at(&mut self, index: usize, color: Color) {
-        let ptr = self.data.as_mut_ptr();
-        unsafe { ptr.add(index).write(color) }
     }
 
     pub fn width(&self) -> usize {

@@ -1,13 +1,12 @@
-use crate::buffer::{Buffer, linear_to_gamma};
+use crate::buffer::{linear_to_gamma, Buffer};
 use crate::color::Color;
-use crate::hittable::Hittable;
 use crate::hittable::hittable_list::HittableList;
+use crate::hittable::Hittable;
 use crate::interval::Interval;
 use crate::material::ScatterResult;
 use crate::ray::Ray;
 use crate::utils::random_in_unit_disk;
-use glam::{Vec3, vec3};
-use rand::prelude::SliceRandom;
+use glam::{vec3, Vec3};
 use rayon::prelude::*;
 use std::cmp::max;
 use std::sync::mpsc::Sender;
@@ -117,6 +116,9 @@ impl Camera {
         let mut loop_count = 1.0;
 
         loop {
+            use std::time::Instant;
+            let now = Instant::now();
+
             buffer
                 .data
                 .par_iter_mut()
@@ -140,7 +142,9 @@ impl Camera {
                         + (new_color * (1.0 / loop_count));
                     *pixel = Color::from_vec3(color);
                 });
-            println!("Loop {loop_count}");
+
+            let elapsed = now.elapsed();
+            println!("Loop {loop_count} finished in {:.2?}", elapsed);
             loop_count = loop_count + 1.0;
             tx.send(buffer.clone()).unwrap();
         }
@@ -219,11 +223,4 @@ fn ray_color(ray: &Ray, depth: u32, world: &dyn Hittable) -> Vec3 {
     let unit_direction = ray.direction.normalize();
     let a = 0.5 * (unit_direction.y + 1.0);
     (1.0 - a) * vec3(1.0, 1.0, 1.0) + a * vec3(0.5, 0.7, 1.0)
-}
-
-fn shuffled_range(start: usize, end: usize) -> Vec<usize> {
-    assert!(start < end);
-    let mut v: Vec<usize> = (start..end).collect();
-    v.shuffle(&mut rand::rng());
-    v
 }

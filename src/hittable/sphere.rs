@@ -8,11 +8,11 @@ use std::sync::Arc;
 pub struct Sphere {
     center: Ray,
     radius: f32,
-    material: Arc<dyn Material + Sync>,
+    material: Arc<dyn Material>,
 }
 
 impl Sphere {
-    pub fn new_stationary(center: Vec3, radius: f32, material: Arc<dyn Material + Sync>) -> Sphere {
+    pub fn new_stationary(center: Vec3, radius: f32, material: Arc<dyn Material>) -> Sphere {
         assert!(radius > 0.0);
         Sphere {
             center: Ray::new(center, Vec3::ZERO, 0.0),
@@ -21,7 +21,7 @@ impl Sphere {
         }
     }
 
-    pub fn new_moving(center1: Vec3, center2: Vec3, radius: f32, material: Arc<dyn Material + Sync>) -> Sphere {
+    pub fn new_moving(center1: Vec3, center2: Vec3, radius: f32, material: Arc<dyn Material>) -> Sphere {
         assert!(radius > 0.0);
         Sphere {
             center: Ray::new(center1, center2-center1, 0.0),
@@ -62,5 +62,3 @@ impl Hittable for Sphere {
         Some(rec)
     }
 }
-
-unsafe impl Sync for Sphere {}

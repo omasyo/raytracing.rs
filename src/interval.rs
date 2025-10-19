@@ -1,5 +1,6 @@
 use std::ops::Range;
 
+#[derive(Copy, Clone)]
 pub struct Interval {
     pub min: f32,
     pub max: f32,
@@ -44,7 +45,27 @@ impl Interval {
         x.clamp(self.min, self.max)
     }
 
-    pub const EMPTY: Self = Self { min: f32::INFINITY, max: f32::NEG_INFINITY };
+    pub fn expand(&self, delta: f32) -> Self {
+        let padding = delta / 2.0;
+        Self::new(self.min - padding, self.max + padding)
+    }
 
-    pub const UNIVERSE: Self = Self { min: f32::NEG_INFINITY, max: f32::INFINITY };
+    pub const EMPTY: Self = Self {
+        min: f32::INFINITY,
+        max: f32::NEG_INFINITY,
+    };
+
+    pub const UNIVERSE: Self = Self {
+        min: f32::NEG_INFINITY,
+        max: f32::INFINITY,
+    };
+}
+
+impl From<(&Interval, &Interval)> for Interval {
+    fn from((a, b): (&Interval, &Interval)) -> Self {
+        Self {
+            min: a.min.min(b.min),
+            max: a.max.min(b.max),
+        }
+    }
 }

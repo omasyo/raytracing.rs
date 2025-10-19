@@ -1,4 +1,4 @@
-use glam::{Vec3, vec3};
+use glam::Vec3;
 
 pub fn random_vector() -> Vec3 {
     Vec3 {

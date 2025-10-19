@@ -134,10 +134,3 @@ pub fn redraw(window: &mut RawWindow, surface: &mut RawSurface) {
         .unwrap();
     window.as_ref().unwrap().request_redraw();
 }
-
-/// Gets a mutable reference to a buffer from a `RawSurface`. Colors are `u32`s.
-/// Accessing an array might look like `softbuffer_quickstart::buffer_mut(&mut self.surface)[y * width + x] = 0xffffff`.
-/// Keep in mind you have to keep track of the buffer width yourself--the RawBuffer type can't do that.
-pub fn buffer_mut(surface: &mut RawSurface) -> softbuffer::Buffer<'_, Rc<Window>, Rc<Window>> {
-    surface.as_mut().unwrap().buffer_mut().unwrap()
-}

@@ -23,25 +23,13 @@ impl DrawBuffer for PpmImage {
         let mut out = io::BufWriter::new(file);
         write!(out, "P3\n{width} {height}\n255\n").unwrap();
 
-        // for index in 0..(width * height) {
-        //     let y = index / width;
-        //     let x = index % width;
-        //     let red = (x * 255)/width;
-        //     let green = (y * 255)/height;
-        //     let blue = (255 - (red + green).min(255)) % 255;
-        //
-        //     buffer[index] = (blue | (green << 8) | (red << 16)).try_into().unwrap();
-        // }
-        for y in 0..height {
-            for x in 0..width {
-                let index = y * width + x;
-                let pixel = buffer.at(index);
-                let red = pixel.red();
-                let green = pixel.green();
-                let blue = pixel.blue();
+        for index in 0..(width * height) {
+            let pixel = buffer.at(index);
+            let red = pixel.red();
+            let green = pixel.green();
+            let blue = pixel.blue();
 
-                write!(out, "{red} {green} {blue}\n").unwrap();
-            }
+            write!(out, "{red} {green} {blue}\n").unwrap();
         }
     }
 }

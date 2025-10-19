@@ -3,7 +3,7 @@ use crate::interval::Interval;
 use crate::ray::Ray;
 
 pub struct HittableList {
-    pub objects: Vec<Box<dyn Hittable + Sync>>,
+    pub objects: Vec<Box<dyn Hittable>>,
 }
 
 impl HittableList {
@@ -15,13 +15,13 @@ impl HittableList {
         self.objects.clear();
     }
 
-    pub fn add(&mut self, hittable: Box<dyn Hittable + Sync>) {
+    pub fn add(&mut self, hittable: Box<dyn Hittable>) {
         self.objects.push(hittable)
     }
 }
 
-impl From<Vec<Box<dyn Hittable + Sync>>> for HittableList {
-    fn from(value: Vec<Box<dyn Hittable + Sync>>) -> Self {
+impl From<Vec<Box<dyn Hittable>>> for HittableList {
+    fn from(value: Vec<Box<dyn Hittable>>) -> Self {
         HittableList { objects: value }
     }
 }
@@ -39,9 +39,6 @@ impl Hittable for HittableList {
                 rec = Some(temp_rec);
             }
         }
-
         rec
     }
 }
-
-unsafe impl Send for HittableList {}
