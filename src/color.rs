@@ -1,5 +1,4 @@
 use glam::Vec3;
-use std::ops::{Add, AddAssign, Mul};
 
 #[derive(Clone)]
 pub struct Color {

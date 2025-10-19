@@ -30,7 +30,7 @@ fn main() {
 
     let ground_material = Arc::new(Lambertian::new(vec3(0.5, 0.5, 0.5)));
 
-    world.add(Box::new(Sphere::new_stationary(
+    world.add(Arc::new(Sphere::new_stationary(
         vec3(0.0, -1000.0, 0.0),
         1000.0,
         ground_material,
@@ -54,7 +54,7 @@ fn main() {
                     let albedo = random_vector() * random_vector();
                     sphere_material = Arc::new(Lambertian::new(albedo));
                     let center2 = center + vec3(0.0, rand::random_range(0.0..=0.5), 0.0);
-                    world.add(Box::new(Sphere::new_moving(
+                    world.add(Arc::new(Sphere::new_moving(
                         center,
                         center2,
                         0.2,
@@ -64,14 +64,14 @@ fn main() {
                     let albedo = random_vector_range(0.5, 1.0);
                     let fuzz = rand::random_range(0.0..=0.5);
                     sphere_material = Arc::new(Metal::new(albedo, fuzz));
-                    world.add(Box::new(Sphere::new_stationary(
+                    world.add(Arc::new(Sphere::new_stationary(
                         center,
                         0.2,
                         sphere_material.clone(),
                     )));
                 } else {
                     sphere_material = Arc::new(Dielectric::new(1.5));
-                    world.add(Box::new(Sphere::new_stationary(
+                    world.add(Arc::new(Sphere::new_stationary(
                         center,
                         0.2,
                         sphere_material.clone(),
@@ -82,19 +82,19 @@ fn main() {
     }
     
     let material1 = Arc::new(Dielectric::new(1.5));
-    world.add(Box::new(Sphere::new_stationary(
+    world.add(Arc::new(Sphere::new_stationary(
         vec3(0.0, 1.0, 0.0),
         1.0,
         material1,
     )));
     let material2 = Arc::new(Lambertian::new(vec3(0.4, 0.2, 0.1)));
-    world.add(Box::new(Sphere::new_stationary(
+    world.add(Arc::new(Sphere::new_stationary(
         vec3(-4.0, 1.0, 0.0),
         1.0,
         material2,
     )));
     let material3 = Arc::new(Metal::new(vec3(0.7, 0.6, 0.5), 0.0));
-    world.add(Box::new(Sphere::new_stationary(
+    world.add(Arc::new(Sphere::new_stationary(
         vec3(4.0, 1.0, 0.0),
         1.0,
         material3,
