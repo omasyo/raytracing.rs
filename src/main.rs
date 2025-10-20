@@ -11,113 +11,31 @@ mod window;
 
 use crate::buffer::{Buffer, DrawBuffer};
 use crate::camera::{Camera, CameraProperties};
+use crate::color::Color;
 use crate::hittable::Hittable;
 use crate::hittable::bvh::BvhNode;
 use crate::hittable::hittable_list::HittableList;
 use crate::hittable::sphere::Sphere;
 use crate::image::ppm_image::PpmImage;
 use crate::material::Material;
+use crate::material::checker_texture::CheckerTexture;
 use crate::material::dielectric::Dielectric;
 use crate::material::lambertian::Lambertian;
 use crate::material::metal::Metal;
+use crate::material::texture::Texture;
 use crate::utils::{random_vector, random_vector_range};
 use crate::window::{SoftbufferWindow, WindowProperties};
-use glam::vec3;
+use glam::{Vec3, vec3};
 use std::sync::Arc;
 use std::thread;
 use winit::event::WindowEvent;
 
 fn main() {
-    let mut world: HittableList = HittableList::new();
+    let (world, camera) = match 2 {
+        1 => bouncing_spheres(),
+        2 => checkered_spheres(),
+        _ => {unreachable!()} };
 
-    let ground_material = Arc::new(Lambertian::new(vec3(0.5, 0.5, 0.5)));
-
-    world.add(Arc::new(Sphere::new_stationary(
-        vec3(0.0, -1000.0, 0.0),
-        1000.0,
-        ground_material,
-    )));
-
-    for a in -11..11 {
-        for b in -11..11 {
-            let a = a as f32;
-            let b = b as f32;
-            let choose_mat = rand::random::<f32>();
-            let center = vec3(
-                a + 0.9 * rand::random::<f32>(),
-                0.2,
-                b + 0.9 * rand::random::<f32>(),
-            );
-
-            if (center - vec3(4.0, 0.2, 0.0)).length() > 0.9 {
-                let sphere_material: Arc<dyn Material + Sync>;
-
-                if choose_mat < 0.8 {
-                    let albedo = random_vector() * random_vector();
-                    sphere_material = Arc::new(Lambertian::new(albedo));
-                    let center2 = center + vec3(0.0, rand::random_range(0.0..=0.5), 0.0);
-                    world.add(Arc::new(Sphere::new_moving(
-                        center,
-                        center2,
-                        0.2,
-                        sphere_material.clone(),
-                    )));
-                } else if choose_mat < 0.95 {
-                    let albedo = random_vector_range(0.5, 1.0);
-                    let fuzz = rand::random_range(0.0..=0.5);
-                    sphere_material = Arc::new(Metal::new(albedo, fuzz));
-                    world.add(Arc::new(Sphere::new_stationary(
-                        center,
-                        0.2,
-                        sphere_material.clone(),
-                    )));
-                } else {
-                    sphere_material = Arc::new(Dielectric::new(1.5));
-                    world.add(Arc::new(Sphere::new_stationary(
-                        center,
-                        0.2,
-                        sphere_material.clone(),
-                    )));
-                };
-            }
-        }
-    }
-
-    let material1 = Arc::new(Dielectric::new(1.5));
-    world.add(Arc::new(Sphere::new_stationary(
-        vec3(0.0, 1.0, 0.0),
-        1.0,
-        material1,
-    )));
-    let material2 = Arc::new(Lambertian::new(vec3(0.4, 0.2, 0.1)));
-    world.add(Arc::new(Sphere::new_stationary(
-        vec3(-4.0, 1.0, 0.0),
-        1.0,
-        material2,
-    )));
-    let material3 = Arc::new(Metal::new(vec3(0.7, 0.6, 0.5), 0.0));
-    world.add(Arc::new(Sphere::new_stationary(
-        vec3(4.0, 1.0, 0.0),
-        1.0,
-        material3,
-    )));
-
-    let world = HittableList::from(Arc::new(BvhNode::from(world)) as Arc<dyn Hittable>);
-
-    let mut properties = CameraProperties::default();
-
-    properties.aspect_ratio = 16.0 / 9.0;
-    properties.image_width = 1000;
-    properties.samples_per_pixel = 15       ;
-    properties.max_depth = 50;
-    properties.v_fov = 20.0;
-    properties.look_from = vec3(13.0, 2.0, 3.0);
-    properties.look_at = vec3(0.0, 0.0, -1.0);
-    properties.up = vec3(0.0, 1.0, 0.0);
-    properties.defocus_angle = 0.6;
-    properties.focus_dist = 10.0;
-
-    let camera = Camera::new(properties);
     let mut buffer = Buffer::new(camera.image_width, camera.image_height);
 
     let properties = WindowProperties {
@@ -125,7 +43,7 @@ fn main() {
         height: camera.image_height as u32,
         title: "Haha",
     };
-    // let buffer = buffer.clone();
+
     let mut window = SoftbufferWindow::new(properties);
 
     let (tx, rx) = std::sync::mpsc::channel::<Buffer>(); // row index, pixels
@@ -161,4 +79,142 @@ fn main() {
             }
         })
         .expect("window can't run :(");
+}
+
+fn bouncing_spheres() -> (HittableList, Camera) {
+    let mut world: HittableList = HittableList::new();
+
+    let checker: Box<dyn Texture> = Box::new(CheckerTexture::from_color(
+        0.32,
+        &Color::new(Vec3::new(0.2, 0.3, 0.1)),
+        &Color::new(Vec3::new(0.9, 0.9, 0.9)),
+    ));
+    let ground_material = Arc::new(Lambertian::from(checker));
+    world.add(Arc::new(Sphere::new_stationary(
+        vec3(0.0, -1000.0, 0.0),
+        1000.0,
+        ground_material,
+    )));
+
+    for a in -11..11 {
+        for b in -11..11 {
+            let a = a as f32;
+            let b = b as f32;
+            let choose_mat = rand::random::<f32>();
+            let center = vec3(
+                a + 0.9 * rand::random::<f32>(),
+                0.2,
+                b + 0.9 * rand::random::<f32>(),
+            );
+
+            if (center - vec3(4.0, 0.2, 0.0)).length() > 0.9 {
+                let sphere_material: Arc<dyn Material + Sync>;
+
+                if choose_mat < 0.8 {
+                    let albedo = random_vector() * random_vector();
+                    sphere_material = Arc::new(Lambertian::from(albedo));
+                    let center2 = center + vec3(0.0, rand::random_range(0.0..=0.5), 0.0);
+                    world.add(Arc::new(Sphere::new_moving(
+                        center,
+                        center2,
+                        0.2,
+                        sphere_material.clone(),
+                    )));
+                } else if choose_mat < 0.95 {
+                    let albedo = random_vector_range(0.5, 1.0);
+                    let fuzz = rand::random_range(0.0..=0.5);
+                    sphere_material = Arc::new(Metal::new(albedo, fuzz));
+                    world.add(Arc::new(Sphere::new_stationary(
+                        center,
+                        0.2,
+                        sphere_material.clone(),
+                    )));
+                } else {
+                    sphere_material = Arc::new(Dielectric::new(1.5));
+                    world.add(Arc::new(Sphere::new_stationary(
+                        center,
+                        0.2,
+                        sphere_material.clone(),
+                    )));
+                };
+            }
+        }
+    }
+
+    let material1 = Arc::new(Dielectric::new(1.5));
+    world.add(Arc::new(Sphere::new_stationary(
+        vec3(0.0, 1.0, 0.0),
+        1.0,
+        material1,
+    )));
+    let material2 = Arc::new(Lambertian::from(vec3(0.4, 0.2, 0.1)));
+    world.add(Arc::new(Sphere::new_stationary(
+        vec3(-4.0, 1.0, 0.0),
+        1.0,
+        material2,
+    )));
+    let material3 = Arc::new(Metal::new(vec3(0.7, 0.6, 0.5), 0.0));
+    world.add(Arc::new(Sphere::new_stationary(
+        vec3(4.0, 1.0, 0.0),
+        1.0,
+        material3,
+    )));
+
+    let world = HittableList::from(Arc::new(BvhNode::from(world)) as Arc<dyn Hittable>);
+
+    let mut properties = CameraProperties::default();
+
+    properties.aspect_ratio = 16.0 / 9.0;
+    properties.image_width = 1000;
+    properties.samples_per_pixel = 15;
+    properties.max_depth = 50;
+    properties.v_fov = 20.0;
+    properties.look_from = vec3(13.0, 2.0, 3.0);
+    properties.look_at = vec3(0.0, 0.0, -1.0);
+    properties.up = vec3(0.0, 1.0, 0.0);
+    properties.defocus_angle = 0.6;
+    properties.focus_dist = 10.0;
+
+    let camera = Camera::new(properties);
+
+    (world, camera)
+}
+
+fn checkered_spheres() -> (HittableList, Camera) {
+    let mut world: HittableList = HittableList::new();
+
+    let checker: Box<dyn Texture> = Box::new(CheckerTexture::from_color(
+        0.32,
+        &Color::new(Vec3::new(0.2, 0.3, 0.1)),
+        &Color::new(Vec3::new(0.9, 0.9, 0.9)),
+    ));
+    let checker = Arc::new(Lambertian::from(checker));
+    world.add(Arc::new(Sphere::new_stationary(
+        vec3(0.0, -10.0, 0.0),
+        10.0,
+        checker.clone(),
+    )));
+    world.add(Arc::new(Sphere::new_stationary(
+        vec3(0.0, 10.0, 0.0),
+        10.0,
+        checker,
+    )));
+
+    let world = HittableList::from(Arc::new(BvhNode::from(world)) as Arc<dyn Hittable>);
+
+    let mut properties = CameraProperties::default();
+
+    properties.aspect_ratio = 16.0 / 9.0;
+    properties.image_width = 400;
+    properties.samples_per_pixel = 15;
+    properties.max_depth = 50;
+    properties.v_fov = 20.0;
+    properties.look_from = vec3(13.0, 2.0, 3.0);
+    properties.look_at = vec3(0.0, 0.0, 0.0);
+    properties.up = vec3(0.0, 1.0, 0.0);
+    properties.defocus_angle = 0.6;
+
+    let camera = Camera::new(properties);
+
+    (world, camera)
 }
