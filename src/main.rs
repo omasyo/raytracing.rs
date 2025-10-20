@@ -107,8 +107,8 @@ fn main() {
     let mut properties = CameraProperties::default();
 
     properties.aspect_ratio = 16.0 / 9.0;
-    properties.image_width = 400;
-    properties.samples_per_pixel = 100;
+    properties.image_width = 1000;
+    properties.samples_per_pixel = 15       ;
     properties.max_depth = 50;
     properties.v_fov = 20.0;
     properties.look_from = vec3(13.0, 2.0, 3.0);

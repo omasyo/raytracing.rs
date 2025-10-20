@@ -120,6 +120,7 @@ impl Camera {
 
             buffer
                 .data
+                // .iter_mut()
                 .par_iter_mut()
                 .enumerate()
                 .for_each(|(index, pixel)| {

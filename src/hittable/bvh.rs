@@ -3,7 +3,6 @@ use crate::hittable::hittable_list::HittableList;
 use crate::hittable::{HitRecord, Hittable};
 use crate::interval::Interval;
 use crate::ray::Ray;
-use glam::Vec3;
 use std::cmp::Ordering;
 use std::sync::Arc;
 
@@ -15,6 +14,11 @@ pub struct BvhNode {
 
 impl BvhNode {
     pub fn new(objects: &mut [Arc<dyn Hittable>]) -> Self {
+        let mut bounding_box = Aabb::EMPTY;
+        for object in objects.iter() {
+            bounding_box = Aabb::from((&bounding_box, object.bounding_box()));
+        }
+
         let axis = rand::random_range(0..=2);
 
         let comparator: fn(&Arc<dyn Hittable>, &Arc<dyn Hittable>) -> Ordering = match axis {
@@ -44,7 +48,6 @@ impl BvhNode {
             }
         }
 
-        let bounding_box = Aabb::from((left.bounding_box(), right.bounding_box()));
         Self {
             left,
             right,

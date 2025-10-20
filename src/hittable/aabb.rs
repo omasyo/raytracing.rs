@@ -43,10 +43,24 @@ impl Aabb {
         }
     }
 
+    pub fn longest_axis(&self) -> usize {
+        if self.x.size() > self.y.size() {
+            if self.x.size() > self.z.size() { 0 } else { 1 }
+        } else {
+            if self.y.size() > self.z.size() { 1 } else { 2 }
+        }
+    }
+
     pub const EMPTY: Self = Self {
         x: Interval::EMPTY,
         y: Interval::EMPTY,
         z: Interval::EMPTY,
+    };
+
+    pub const UNIVERSE: Self = Self {
+        x: Interval::UNIVERSE,
+        y: Interval::UNIVERSE,
+        z: Interval::UNIVERSE,
     };
 }
 
