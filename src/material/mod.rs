@@ -4,6 +4,7 @@ pub mod metal;
 pub mod texture;
 pub mod checker_texture;
 pub mod solid_color;
+pub mod image_texture;
 
 use crate::hittable::HitRecord;
 use crate::ray::Ray;

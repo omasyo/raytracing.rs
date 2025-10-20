@@ -4,6 +4,7 @@ use crate::interval::Interval;
 use crate::material::Material;
 use crate::ray::Ray;
 use glam::Vec3;
+use std::f32::consts::PI;
 use std::sync::Arc;
 
 pub struct Sphere {
@@ -72,7 +73,14 @@ impl Hittable for Sphere {
         let point = ray.at(root);
         let outward_normal = (point - current_center) / self.radius;
 
-        let rec = HitRecord::new(point, root, ray, outward_normal, self.material.clone(), (0.0, 0.0));
+        let rec = HitRecord::new(
+            point,
+            root,
+            ray,
+            outward_normal,
+            self.material.clone(),
+            get_sphere_uv(outward_normal),
+        );
 
         Some(rec)
     }
@@ -80,4 +88,13 @@ impl Hittable for Sphere {
     fn bounding_box(&self) -> &Aabb {
         &self.bounding_box
     }
+}
+
+fn get_sphere_uv(p: Vec3) -> (f32, f32) {
+    let theta = (-p.y.clamp(-1.0, 1.0)).acos();
+    let phi = (-p.z).atan2(p.x) + PI;
+
+    let u = phi / (2.0 * PI);
+    let v = theta / PI;
+    (u, v)
 }

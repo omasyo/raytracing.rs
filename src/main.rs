@@ -29,11 +29,13 @@ use glam::{Vec3, vec3};
 use std::sync::Arc;
 use std::thread;
 use winit::event::WindowEvent;
+use crate::material::image_texture::ImageTexture;
 
 fn main() {
-    let (world, camera) = match 2 {
+    let (world, camera) = match 3 {
         1 => bouncing_spheres(),
         2 => checkered_spheres(),
+        3 => earth(),
         _ => {unreachable!()} };
 
     let mut buffer = Buffer::new(camera.image_width, camera.image_height);
@@ -213,6 +215,36 @@ fn checkered_spheres() -> (HittableList, Camera) {
     properties.look_at = vec3(0.0, 0.0, 0.0);
     properties.up = vec3(0.0, 1.0, 0.0);
     properties.defocus_angle = 0.6;
+
+    let camera = Camera::new(properties);
+
+    (world, camera)
+}
+
+
+fn earth() -> (HittableList, Camera) {
+
+    let earth_texture: Box<dyn Texture> = Box::new(ImageTexture::new("earthmap.jpg"));
+    let earth_surface = Arc::new(Lambertian::from(earth_texture));
+    let globe: Arc<dyn Hittable> = Arc::new(Sphere::new_stationary(
+        vec3(0.0, 0.0, 0.0),
+        2.0,
+        earth_surface,
+    ));
+
+    let world = HittableList::from(globe);
+
+    let mut properties = CameraProperties::default();
+
+    properties.aspect_ratio = 16.0 / 9.0;
+    properties.image_width = 400;
+    properties.samples_per_pixel = 15;
+    properties.max_depth = 50;
+    properties.v_fov = 20.0;
+    properties.look_from = vec3(0.0, 0.0, 12.0);
+    properties.look_at = vec3(0.0, 0.0, 0.0);
+    properties.up = vec3(0.0, 1.0, 0.0);
+    // properties.defocus_angle = 0.6;
 
     let camera = Camera::new(properties);
 
