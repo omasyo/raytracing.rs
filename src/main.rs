@@ -79,7 +79,7 @@ fn main() {
                             let x = index % b.width;
                             let y = index / b.width;
                             let window_index = (y * width) + x;
-                            window_buffer[window_index] = pixel.rgb_value();
+                            window_buffer[window_index] = pixel.linear_to_gamma().rgb_value();
                         }
                     }
                 }
@@ -371,11 +371,11 @@ fn simple_light() -> (HittableList, Camera) {
     )));
 
     let diffuse_light = Arc::new(DiffuseLight::from(Vec3::splat(4.0)));
-    // world.add(Arc::new(Sphere::new_stationary(
-    //     vec3(0.0, 7.0, 0.0),
-    //     2.0,
-    //     diffuse_light.clone(),
-    // )));
+    world.add(Arc::new(Sphere::new_stationary(
+        vec3(0.0, 7.0, 0.0),
+        2.0,
+        diffuse_light.clone(),
+    )));
     world.add(Arc::new(Quad::new(
         vec3(3.0, 1.0, -2.0),
         vec3(2.0, 0.0, 0.0),

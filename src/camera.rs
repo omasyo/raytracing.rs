@@ -1,12 +1,12 @@
 use crate::buffer::Buffer;
-use crate::color::{Color, linear_to_gamma};
-use crate::hittable::Hittable;
+use crate::color::Color;
 use crate::hittable::hittable_list::HittableList;
+use crate::hittable::Hittable;
 use crate::interval::Interval;
 use crate::material::ScatterResult;
 use crate::ray::Ray;
 use crate::utils::random_in_unit_disk;
-use glam::{Vec3, vec3};
+use glam::{vec3, Vec3};
 use rayon::prelude::*;
 use std::cmp::max;
 use std::sync::mpsc::Sender;
@@ -132,13 +132,7 @@ impl Camera {
                     let i = index % self.image_width;
 
                     let ray = self.get_ray(i as f32, j as f32);
-                    let pixel_color = self.ray_color(&ray, self.max_depth, world);
-
-                    let new_color = Vec3 {
-                        x: linear_to_gamma(pixel_color.x),
-                        y: linear_to_gamma(pixel_color.y),
-                        z: linear_to_gamma(pixel_color.z),
-                    };
+                    let new_color = self.ray_color(&ray, self.max_depth, world);
                     let old_color = pixel.vec3();
                     let color = (old_color * (loop_count - 1.0) / loop_count)
                         + (new_color * (1.0 / loop_count));

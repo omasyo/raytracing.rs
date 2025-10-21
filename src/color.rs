@@ -55,13 +55,13 @@ impl Color {
         (r << 16) | (g << 8) | b
     }
 
-    // pub fn linear_to_gamma(&self) -> Self {
-    //     Color::new(
-    //         self.red().isqrt(),
-    //         self.green().isqrt(),
-    //         self.blue().isqrt(),
-    //     )
-    // }
+    pub fn linear_to_gamma(&self) -> Self {
+        Color::new(Vec3 {
+            x: linear_to_gamma(self.value.x),
+            y: linear_to_gamma(self.value.y),
+            z: linear_to_gamma(self.value.z),
+        })
+    }
 }
 
 
