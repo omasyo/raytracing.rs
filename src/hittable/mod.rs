@@ -2,6 +2,7 @@ pub mod aabb;
 pub mod bvh;
 pub mod hittable_list;
 pub mod sphere;
+pub mod quad;
 
 use crate::interval::Interval;
 use crate::material::Material;

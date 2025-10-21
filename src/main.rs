@@ -16,6 +16,7 @@ use crate::color::Color;
 use crate::hittable::Hittable;
 use crate::hittable::bvh::BvhNode;
 use crate::hittable::hittable_list::HittableList;
+use crate::hittable::quad::Quad;
 use crate::hittable::sphere::Sphere;
 use crate::image::ppm_image::PpmImage;
 use crate::material::Material;
@@ -34,11 +35,12 @@ use std::thread;
 use winit::event::WindowEvent;
 
 fn main() {
-    let (world, camera) = match 4 {
+    let (world, camera) = match 5 {
         1 => bouncing_spheres(),
         2 => checkered_spheres(),
         3 => earth(),
         4 => perlin_spheres(),
+        5 => quads(),
         _ => {
             unreachable!()
         }
@@ -279,6 +281,63 @@ fn perlin_spheres() -> (HittableList, Camera) {
     properties.max_depth = 50;
     properties.v_fov = 20.0;
     properties.look_from = vec3(13.0, 2.0, 3.0);
+    properties.look_at = vec3(0.0, 0.0, 0.0);
+    properties.up = vec3(0.0, 1.0, 0.0);
+    properties.defocus_angle = 0.0;
+
+    let camera = Camera::new(properties);
+
+    (world, camera)
+}
+
+fn quads() -> (HittableList, Camera) {
+    let mut world = HittableList::new();
+
+    let left_red = Arc::new(Lambertian::from(Vec3::new(1.0, 0.2, 0.2)));
+    let back_green = Arc::new(Lambertian::from(Vec3::new(0.2, 1.0, 0.2)));
+    let right_blue = Arc::new(Lambertian::from(Vec3::new(0.2, 0.2, 1.0)));
+    let upper_orange = Arc::new(Lambertian::from(Vec3::new(1.0, 0.5, 0.0)));
+    let lower_teal = Arc::new(Lambertian::from(Vec3::new(0.2, 0.8, 0.8)));
+
+    world.add(Arc::new(Quad::new(
+        vec3(-3.0, -2.0, 5.0),
+        vec3(0.0, 0.0, -4.0),
+        vec3(0.0, 4.0, 0.0),
+        left_red,
+    )));
+    world.add(Arc::new(Quad::new(
+        vec3(-2.0, -2.0, 0.0),
+        vec3(4.0, 0.0, 0.0),
+        vec3(0.0, 4.0, 0.0),
+        back_green,
+    )));
+    world.add(Arc::new(Quad::new(
+        vec3(3.0, -2.0, 1.0),
+        vec3(0.0, 0.0, 4.0),
+        vec3(0.0, 4.0, 0.0),
+        right_blue,
+    )));
+    world.add(Arc::new(Quad::new(
+        vec3(-2.0, 3.0, 1.0),
+        vec3(4.0, 0.0, 0.0),
+        vec3(0.0, 0.0, 4.0),
+        upper_orange,
+    )));
+    world.add(Arc::new(Quad::new(
+        vec3(-2.0, -3.0, 5.0),
+        vec3(4.0, 0.0, 0.0),
+        vec3(0.0, 0.0, -4.0),
+        lower_teal,
+    )));
+
+    let mut properties = CameraProperties::default();
+
+    properties.aspect_ratio = 1.0;
+    properties.image_width = 400;
+    properties.samples_per_pixel = 15;
+    properties.max_depth = 50;
+    properties.v_fov = 80.0;
+    properties.look_from = vec3(0.0, 0.0, 9.0);
     properties.look_at = vec3(0.0, 0.0, 0.0);
     properties.up = vec3(0.0, 1.0, 0.0);
     properties.defocus_angle = 0.0;

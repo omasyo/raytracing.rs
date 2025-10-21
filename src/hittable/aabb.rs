@@ -10,7 +10,9 @@ pub struct Aabb {
 
 impl Aabb {
     pub fn new(x: Interval, y: Interval, z: Interval) -> Self {
-        Self { x, y, z }
+        let mut instance = Self { x, y, z };
+        instance.pad_to_minimums();
+        instance
     }
     pub fn hit(&self, ray: &Ray, mut ray_t: Interval) -> bool {
         for axis in 0..3 {
@@ -62,11 +64,24 @@ impl Aabb {
         y: Interval::UNIVERSE,
         z: Interval::UNIVERSE,
     };
+
+    fn pad_to_minimums(&mut self) {
+        let delta = 0.000_1;
+        if self.x.size() < delta {
+            self.x = self.x.expand(delta);
+        }
+        if self.y.size() < delta {
+            self.y = self.y.expand(delta);
+        }
+        if self.z.size() < delta {
+            self.z = self.z.expand(delta);
+        }
+    }
 }
 
 impl From<(Vec3, Vec3)> for Aabb {
     fn from((a, b): (Vec3, Vec3)) -> Self {
-        Self {
+        let mut instance = Self {
             x: if a.x <= b.x {
                 Interval::new(a.x, b.x)
             } else {
@@ -82,7 +97,9 @@ impl From<(Vec3, Vec3)> for Aabb {
             } else {
                 Interval::new(b.z, a.z)
             },
-        }
+        };
+        instance.pad_to_minimums();
+        instance
     }
 }
 
