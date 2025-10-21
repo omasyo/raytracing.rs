@@ -5,6 +5,7 @@ mod hittable;
 mod image;
 mod interval;
 mod material;
+mod perlin;
 mod ray;
 mod utils;
 mod window;
@@ -18,25 +19,30 @@ use crate::hittable::hittable_list::HittableList;
 use crate::hittable::sphere::Sphere;
 use crate::image::ppm_image::PpmImage;
 use crate::material::Material;
-use crate::material::checker_texture::CheckerTexture;
 use crate::material::dielectric::Dielectric;
 use crate::material::lambertian::Lambertian;
 use crate::material::metal::Metal;
 use crate::material::texture::Texture;
+use crate::material::texture::checker_texture::CheckerTexture;
+use crate::material::texture::image_texture::ImageTexture;
+use crate::material::texture::noise_texture::NoiseTexture;
 use crate::utils::{random_vector, random_vector_range};
 use crate::window::{SoftbufferWindow, WindowProperties};
 use glam::{Vec3, vec3};
 use std::sync::Arc;
 use std::thread;
 use winit::event::WindowEvent;
-use crate::material::image_texture::ImageTexture;
 
 fn main() {
-    let (world, camera) = match 3 {
+    let (world, camera) = match 4 {
         1 => bouncing_spheres(),
         2 => checkered_spheres(),
         3 => earth(),
-        _ => {unreachable!()} };
+        4 => perlin_spheres(),
+        _ => {
+            unreachable!()
+        }
+    };
 
     let mut buffer = Buffer::new(camera.image_width, camera.image_height);
 
@@ -221,9 +227,7 @@ fn checkered_spheres() -> (HittableList, Camera) {
     (world, camera)
 }
 
-
 fn earth() -> (HittableList, Camera) {
-
     let earth_texture: Box<dyn Texture> = Box::new(ImageTexture::new("earthmap.jpg"));
     let earth_surface = Arc::new(Lambertian::from(earth_texture));
     let globe: Arc<dyn Hittable> = Arc::new(Sphere::new_stationary(
@@ -245,6 +249,39 @@ fn earth() -> (HittableList, Camera) {
     properties.look_at = vec3(0.0, 0.0, 0.0);
     properties.up = vec3(0.0, 1.0, 0.0);
     // properties.defocus_angle = 0.6;
+
+    let camera = Camera::new(properties);
+
+    (world, camera)
+}
+
+fn perlin_spheres() -> (HittableList, Camera) {
+    let mut world = HittableList::new();
+
+    let perlin_texture: Box<dyn Texture> = Box::new(NoiseTexture::new());
+    let perlin_surface = Arc::new(Lambertian::from(perlin_texture));
+    world.add(Arc::new(Sphere::new_stationary(
+        vec3(0.0, -1_000.0, 0.0),
+        1_000.0,
+        perlin_surface.clone(),
+    )));
+    world.add(Arc::new(Sphere::new_stationary(
+        vec3(0.0, 2.0, 0.0),
+        2.0,
+        perlin_surface.clone(),
+    )));
+
+    let mut properties = CameraProperties::default();
+
+    properties.aspect_ratio = 16.0 / 9.0;
+    properties.image_width = 400;
+    properties.samples_per_pixel = 15;
+    properties.max_depth = 50;
+    properties.v_fov = 20.0;
+    properties.look_from = vec3(13.0, 2.0, 3.0);
+    properties.look_at = vec3(0.0, 0.0, 0.0);
+    properties.up = vec3(0.0, 1.0, 0.0);
+    properties.defocus_angle = 0.0;
 
     let camera = Camera::new(properties);
 

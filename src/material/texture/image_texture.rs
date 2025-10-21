@@ -1,7 +1,7 @@
-use crate::color::Color;
 use crate::material::texture::Texture;
-use glam::{Vec3, vec3};
-use image::{GenericImageView, Pixel, RgbImage, open};
+use glam::Vec3;
+use image::{open, Pixel, RgbImage};
+use crate::color::Color;
 
 pub struct ImageTexture {
     image: RgbImage,
