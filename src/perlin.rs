@@ -1,4 +1,4 @@
-use crate::utils::{random_vector, random_vector_range};
+use crate::utils::random_vector_range;
 use glam::Vec3;
 
 const POINT_COUNT: usize = 256;

@@ -18,6 +18,7 @@ impl NoiseTexture {
 
 impl Texture for NoiseTexture {
     fn value(&self, _: f32, _: f32, point: Vec3) -> Vec3 {
-        Vec3::ONE * self.noise.turbulence(point, 7)
+        Vec3::splat(0.5)
+            * (1.0 + f32::sin(self.scale * point.z + 10.0 * self.noise.turbulence(point, 7)))
     }
 }
