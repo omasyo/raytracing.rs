@@ -21,6 +21,7 @@ use crate::hittable::sphere::Sphere;
 use crate::image::ppm_image::PpmImage;
 use crate::material::Material;
 use crate::material::dielectric::Dielectric;
+use crate::material::diffuse_light::DiffuseLight;
 use crate::material::lambertian::Lambertian;
 use crate::material::metal::Metal;
 use crate::material::texture::Texture;
@@ -35,12 +36,13 @@ use std::thread;
 use winit::event::WindowEvent;
 
 fn main() {
-    let (world, camera) = match 5 {
+    let (world, camera) = match 6 {
         1 => bouncing_spheres(),
         2 => checkered_spheres(),
         3 => earth(),
         4 => perlin_spheres(),
         5 => quads(),
+        6 => simple_light(),
         _ => {
             unreachable!()
         }
@@ -178,6 +180,7 @@ fn bouncing_spheres() -> (HittableList, Camera) {
     properties.image_width = 1000;
     properties.samples_per_pixel = 15;
     properties.max_depth = 50;
+    properties.background = vec3(0.7, 0.8, 1.0);
     properties.v_fov = 20.0;
     properties.look_from = vec3(13.0, 2.0, 3.0);
     properties.look_at = vec3(0.0, 0.0, -1.0);
@@ -218,6 +221,7 @@ fn checkered_spheres() -> (HittableList, Camera) {
     properties.image_width = 400;
     properties.samples_per_pixel = 15;
     properties.max_depth = 50;
+    properties.background = vec3(0.7, 0.8, 1.0);
     properties.v_fov = 20.0;
     properties.look_from = vec3(13.0, 2.0, 3.0);
     properties.look_at = vec3(0.0, 0.0, 0.0);
@@ -246,6 +250,7 @@ fn earth() -> (HittableList, Camera) {
     properties.image_width = 400;
     properties.samples_per_pixel = 15;
     properties.max_depth = 50;
+    properties.background = vec3(0.7, 0.8, 1.0);
     properties.v_fov = 20.0;
     properties.look_from = vec3(0.0, 0.0, 12.0);
     properties.look_at = vec3(0.0, 0.0, 0.0);
@@ -279,6 +284,7 @@ fn perlin_spheres() -> (HittableList, Camera) {
     properties.image_width = 400;
     properties.samples_per_pixel = 15;
     properties.max_depth = 50;
+    properties.background = vec3(0.7, 0.8, 1.0);
     properties.v_fov = 20.0;
     properties.look_from = vec3(13.0, 2.0, 3.0);
     properties.look_at = vec3(0.0, 0.0, 0.0);
@@ -336,9 +342,57 @@ fn quads() -> (HittableList, Camera) {
     properties.image_width = 400;
     properties.samples_per_pixel = 15;
     properties.max_depth = 50;
+    properties.background = vec3(0.7, 0.8, 1.0);
     properties.v_fov = 80.0;
     properties.look_from = vec3(0.0, 0.0, 9.0);
     properties.look_at = vec3(0.0, 0.0, 0.0);
+    properties.up = vec3(0.0, 1.0, 0.0);
+    properties.defocus_angle = 0.0;
+
+    let camera = Camera::new(properties);
+
+    (world, camera)
+}
+
+fn simple_light() -> (HittableList, Camera) {
+    let mut world = HittableList::new();
+
+    let perlin_texture: Box<dyn Texture> = Box::new(NoiseTexture::new(4.0));
+    let perlin_surface = Arc::new(Lambertian::from(perlin_texture));
+    world.add(Arc::new(Sphere::new_stationary(
+        vec3(0.0, -1_000.0, 0.0),
+        1_000.0,
+        perlin_surface.clone(),
+    )));
+    world.add(Arc::new(Sphere::new_stationary(
+        vec3(0.0, 2.0, 0.0),
+        2.0,
+        perlin_surface.clone(),
+    )));
+
+    let diffuse_light = Arc::new(DiffuseLight::from(Vec3::splat(4.0)));
+    // world.add(Arc::new(Sphere::new_stationary(
+    //     vec3(0.0, 7.0, 0.0),
+    //     2.0,
+    //     diffuse_light.clone(),
+    // )));
+    world.add(Arc::new(Quad::new(
+        vec3(3.0, 1.0, -2.0),
+        vec3(2.0, 0.0, 0.0),
+        vec3(0.0, 2.0, 0.0),
+        diffuse_light,
+    )));
+
+    let mut properties = CameraProperties::default();
+
+    properties.aspect_ratio = 16.0 / 9.0;
+    properties.image_width = 400;
+    properties.samples_per_pixel = 15;
+    properties.max_depth = 50;
+    properties.background = Vec3::splat(0.0);
+    properties.v_fov = 20.0;
+    properties.look_from = vec3(26.0, 3.0, 6.0);
+    properties.look_at = vec3(0.0, 2.0, 0.0);
     properties.up = vec3(0.0, 1.0, 0.0);
     properties.defocus_angle = 0.0;
 

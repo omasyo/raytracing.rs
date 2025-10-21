@@ -1,4 +1,4 @@
-use crate::buffer::{Buffer};
+use crate::buffer::Buffer;
 use crate::color::{Color, linear_to_gamma};
 use crate::hittable::Hittable;
 use crate::hittable::hittable_list::HittableList;
@@ -16,6 +16,7 @@ pub struct CameraProperties {
     pub image_width: usize,
     pub samples_per_pixel: u32,
     pub max_depth: u32,
+    pub background: Vec3,
     pub v_fov: f32,
     pub look_from: Vec3,
     pub look_at: Vec3,
@@ -31,6 +32,7 @@ impl Default for CameraProperties {
             image_width: 100,
             samples_per_pixel: 10,
             max_depth: 50,
+            background: Vec3::ZERO,
             v_fov: 90.0,
             look_from: vec3(0.0, 0.0, 0.0),
             look_at: vec3(0.0, 0.0, -1.0),
@@ -50,6 +52,7 @@ pub struct Camera {
     pixel_delta_v: Vec3,
     samples_per_pixel: u32,
     max_depth: u32,
+    background: Vec3,
     u: Vec3,
     v: Vec3,
     w: Vec3,
@@ -101,6 +104,7 @@ impl Camera {
             pixel_delta_v,
             samples_per_pixel: properties.samples_per_pixel,
             max_depth: properties.max_depth,
+            background: properties.background,
             u,
             v,
             w,
@@ -128,7 +132,7 @@ impl Camera {
                     let i = index % self.image_width;
 
                     let ray = self.get_ray(i as f32, j as f32);
-                    let pixel_color = ray_color(&ray, self.max_depth, world);
+                    let pixel_color = self.ray_color(&ray, self.max_depth, world);
 
                     let new_color = Vec3 {
                         x: linear_to_gamma(pixel_color.x),
@@ -169,6 +173,29 @@ impl Camera {
         let p = random_in_unit_disk();
         self.center + (p.x * self.defocus_disk_u) + (p.y * self.defocus_disk_v)
     }
+
+    fn ray_color(&self, ray: &Ray, depth: u32, world: &dyn Hittable) -> Vec3 {
+        if depth <= 0 {
+            return Vec3::ZERO;
+        }
+
+        let Some(rec) = world.hit(ray, Interval::new(0.0001, f32::INFINITY)) else {
+            return self.background;
+        };
+
+        let emission_color = rec.material.emitted(rec.u, rec.v, rec.point);
+        let Some(ScatterResult {
+            attenuation,
+            scattered,
+        }) = rec.material.scatter(ray, &rec)
+        else {
+            return emission_color;
+        };
+
+        let scatter_color = attenuation * self.ray_color(&scattered, depth - 1, world);
+
+        emission_color + scatter_color
+    }
 }
 
 fn sample_square() -> Vec3 {
@@ -177,25 +204,4 @@ fn sample_square() -> Vec3 {
         rand::random_range(0.0..=1.0) - 0.5,
         0.0,
     )
-}
-
-fn ray_color(ray: &Ray, depth: u32, world: &dyn Hittable) -> Vec3 {
-    if depth <= 0 {
-        return vec3(0.0, 0.0, 0.0);
-    }
-
-    if let Some(rec) = world.hit(ray, Interval::new(0.0001, f32::INFINITY)) {
-        if let Some(ScatterResult {
-            attenuation,
-            scattered,
-        }) = rec.material.scatter(ray, &rec)
-        {
-            return attenuation * ray_color(&scattered, depth - 1, world);
-        }
-        return vec3(0.0, 0.0, 0.0);
-    }
-
-    let unit_direction = ray.direction.normalize();
-    let a = 0.5 * (unit_direction.y + 1.0);
-    (1.0 - a) * vec3(1.0, 1.0, 1.0) + a * vec3(0.5, 0.7, 1.0)
 }
