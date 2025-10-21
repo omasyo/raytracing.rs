@@ -33,11 +33,33 @@ impl Perlin {
     }
 
     pub fn noise(&self, p: Vec3) -> f32 {
-        let i = ((4.0 * p.x).floor() as i32 & 255) as usize;
-        let j = ((4.0 * p.y).floor() as i32 & 255) as usize;
-        let k = ((4.0 * p.z).floor() as i32 & 255) as usize;
+        let mut u = p.x - p.x.floor();
+        let mut v = p.y - p.y.floor();
+        let mut w = p.z - p.z.floor();
 
-        self.rand_float[self.perm_x[i] ^ self.perm_y[j] ^ self.perm_z[k]]
+        u = u * u * (3.0 - 2.0 * u);
+        v = v * v * (3.0 - 2.0 * v);
+        w = w * w * (3.0 - 2.0 * w);
+
+        let i = p.x.floor() as i32;
+        let j = p.y.floor() as i32;
+        let k = p.z.floor() as i32;
+        let mut c = [[[0.0; 2]; 2]; 2];
+
+        for di in 0..2 {
+            for dj in 0..2 {
+                for dk in 0..2 {
+                    let ix = ((i + (di as i32)) & 255) as usize;
+                    let iy = ((j + (dj as i32)) & 255) as usize;
+                    let iz = ((k + (dk as i32)) & 255) as usize;
+
+                    let idx = self.perm_x[ix] ^ self.perm_y[iy] ^ self.perm_z[iz];
+                    c[di][dj][dk] = self.rand_float[idx];
+                }
+            }
+        }
+
+        trilinear_interpolation(&c, u, v, w)
     }
 }
 
@@ -55,4 +77,23 @@ fn permute(p: &mut [usize]) {
         p[i] = p[target];
         p[target] = tmp;
     }
+}
+
+pub fn trilinear_interpolation(c: &[[[f32; 2]; 2]; 2], u: f32, v: f32, w: f32) -> f32 {
+    let mut acc = 0.0;
+    for i in 0..2 {
+        for j in 0..2 {
+            for k in 0..2 {
+                let c_val = c[i][j][k];
+                let i = i as f32;
+                let j = j as f32;
+                let k = k as f32;
+                acc += (i * u + (1.0 - i) * (1.0 - u))
+                    * (j * v + (1.0 - j) * (1.0 - v))
+                    * (k * w + (1.0 - k) * (1.0 - w))
+                    * c_val;
+            }
+        }
+    }
+    acc
 }

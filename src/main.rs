@@ -258,7 +258,7 @@ fn earth() -> (HittableList, Camera) {
 fn perlin_spheres() -> (HittableList, Camera) {
     let mut world = HittableList::new();
 
-    let perlin_texture: Box<dyn Texture> = Box::new(NoiseTexture::new());
+    let perlin_texture: Box<dyn Texture> = Box::new(NoiseTexture::new(4.0));
     let perlin_surface = Arc::new(Lambertian::from(perlin_texture));
     world.add(Arc::new(Sphere::new_stationary(
         vec3(0.0, -1_000.0, 0.0),

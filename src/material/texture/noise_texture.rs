@@ -4,18 +4,20 @@ use glam::Vec3;
 
 pub struct NoiseTexture {
     noise: Perlin,
+    scale: f32,
 }
 
 impl NoiseTexture {
-    pub fn new() -> Self {
+    pub fn new(scale: f32) -> Self {
         Self {
             noise: Perlin::new(),
+            scale,
         }
     }
 }
 
 impl Texture for NoiseTexture {
     fn value(&self, _: f32, _: f32, point: Vec3) -> Vec3 {
-        Vec3::ONE * self.noise.noise(point)
+        Vec3::ONE * self.noise.noise(point * self.scale)
     }
 }
