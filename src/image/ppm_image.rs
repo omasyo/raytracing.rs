@@ -24,7 +24,7 @@ impl DrawBuffer for PpmImage {
         write!(out, "P3\n{width} {height}\n255\n").unwrap();
 
         for index in 0..(width * height) {
-            let pixel = buffer.at(index);
+            let pixel = buffer.at(index).linear_to_gamma();
             let red = pixel.red();
             let green = pixel.green();
             let blue = pixel.blue();
