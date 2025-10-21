@@ -18,6 +18,6 @@ impl NoiseTexture {
 
 impl Texture for NoiseTexture {
     fn value(&self, _: f32, _: f32, point: Vec3) -> Vec3 {
-        Vec3::ONE * self.noise.noise(point * self.scale)
+        Vec3::ONE * 0.5 * (1.0 + self.noise.noise(point * self.scale))
     }
 }

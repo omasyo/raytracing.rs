@@ -1,9 +1,10 @@
+use crate::utils::{random_vector, random_vector_range};
 use glam::Vec3;
 
 const POINT_COUNT: usize = 256;
 
 pub struct Perlin {
-    rand_float: [f32; POINT_COUNT],
+    rand_vec: [Vec3; POINT_COUNT],
     perm_x: [usize; POINT_COUNT],
     perm_y: [usize; POINT_COUNT],
     perm_z: [usize; POINT_COUNT],
@@ -11,9 +12,9 @@ pub struct Perlin {
 
 impl Perlin {
     pub fn new() -> Self {
-        let mut rand_float = [0.0; POINT_COUNT];
+        let mut rand_vec = [Vec3::ZERO; POINT_COUNT];
         for i in 0..POINT_COUNT {
-            rand_float[i] = rand::random::<f32>()
+            rand_vec[i] = random_vector_range(-1.0, 1.0).normalize();
         }
 
         let mut perm_x = [0; POINT_COUNT];
@@ -25,7 +26,7 @@ impl Perlin {
         perlin_generate_perm(&mut perm_z);
 
         Self {
-            rand_float,
+            rand_vec,
             perm_x,
             perm_y,
             perm_z,
@@ -33,18 +34,14 @@ impl Perlin {
     }
 
     pub fn noise(&self, p: Vec3) -> f32 {
-        let mut u = p.x - p.x.floor();
-        let mut v = p.y - p.y.floor();
-        let mut w = p.z - p.z.floor();
-
-        u = u * u * (3.0 - 2.0 * u);
-        v = v * v * (3.0 - 2.0 * v);
-        w = w * w * (3.0 - 2.0 * w);
+        let u = p.x - p.x.floor();
+        let v = p.y - p.y.floor();
+        let w = p.z - p.z.floor();
 
         let i = p.x.floor() as i32;
         let j = p.y.floor() as i32;
         let k = p.z.floor() as i32;
-        let mut c = [[[0.0; 2]; 2]; 2];
+        let mut c = [[[Vec3::ZERO; 2]; 2]; 2];
 
         for di in 0..2 {
             for dj in 0..2 {
@@ -54,12 +51,12 @@ impl Perlin {
                     let iz = ((k + (dk as i32)) & 255) as usize;
 
                     let idx = self.perm_x[ix] ^ self.perm_y[iy] ^ self.perm_z[iz];
-                    c[di][dj][dk] = self.rand_float[idx];
+                    c[di][dj][dk] = self.rand_vec[idx];
                 }
             }
         }
 
-        trilinear_interpolation(&c, u, v, w)
+        perlin_interpolation(&c, u, v, w)
     }
 }
 
@@ -79,8 +76,12 @@ fn permute(p: &mut [usize]) {
     }
 }
 
-pub fn trilinear_interpolation(c: &[[[f32; 2]; 2]; 2], u: f32, v: f32, w: f32) -> f32 {
+pub fn perlin_interpolation(c: &[[[Vec3; 2]; 2]; 2], u: f32, v: f32, w: f32) -> f32 {
+    let uu = u * u * (3.0 - 2.0 * u);
+    let vv = v * v * (3.0 - 2.0 * v);
+    let ww = w * w * (3.0 - 2.0 * w);
     let mut acc = 0.0;
+
     for i in 0..2 {
         for j in 0..2 {
             for k in 0..2 {
@@ -88,10 +89,11 @@ pub fn trilinear_interpolation(c: &[[[f32; 2]; 2]; 2], u: f32, v: f32, w: f32) -
                 let i = i as f32;
                 let j = j as f32;
                 let k = k as f32;
-                acc += (i * u + (1.0 - i) * (1.0 - u))
-                    * (j * v + (1.0 - j) * (1.0 - v))
-                    * (k * w + (1.0 - k) * (1.0 - w))
-                    * c_val;
+                let weight_v = Vec3::new(u - i, v - j, w - k);
+                acc += (i * uu + (1.0 - i) * (1.0 - uu))
+                    * (j * vv + (1.0 - j) * (1.0 - vv))
+                    * (k * ww + (1.0 - k) * (1.0 - ww))
+                    * c_val.dot(weight_v);
             }
         }
     }
