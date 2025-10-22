@@ -1,4 +1,5 @@
-use std::ops::Range;
+use std::ops::{Add, Range};
+use glam::Vec3;
 
 #[derive(Copy, Clone)]
 pub struct Interval {
@@ -66,6 +67,16 @@ impl From<(&Interval, &Interval)> for Interval {
         Self {
             min: a.min.min(b.min),
             max: a.max.max(b.max),
+        }
+    }
+}
+
+impl Add<f32> for Interval {
+    type Output = Interval;
+    fn add(self, rhs: f32) -> Self::Output {
+        Self {
+            min: self.min + rhs,
+            max: self.max + rhs,
         }
     }
 }

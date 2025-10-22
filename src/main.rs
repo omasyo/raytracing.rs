@@ -16,8 +16,9 @@ use crate::color::Color;
 use crate::hittable::Hittable;
 use crate::hittable::bvh::BvhNode;
 use crate::hittable::hittable_list::HittableList;
-use crate::hittable::quad::Quad;
+use crate::hittable::quad::{Quad, cuboid};
 use crate::hittable::sphere::Sphere;
+use crate::hittable::transform::{RotateY, Translate};
 use crate::image::ppm_image::PpmImage;
 use crate::material::Material;
 use crate::material::dielectric::Dielectric;
@@ -430,7 +431,7 @@ fn cornell_box() -> (HittableList, Camera) {
     )));
     world.add(Arc::new(Quad::new(
         vec3(0.0, 0.0, 0.0),
-        vec3(555.0,0.0,  0.0),
+        vec3(555.0, 0.0, 0.0),
         vec3(0.0, 0.0, 555.0),
         white.clone(),
     )));
@@ -444,8 +445,30 @@ fn cornell_box() -> (HittableList, Camera) {
         vec3(0.0, 0.0, 555.0),
         vec3(555.0, 0.0, 0.0),
         vec3(0.0, 555.0, 0.0),
-        white,
+        white.clone(),
     )));
+
+    let mut box1: Arc<dyn Hittable> = Arc::new(cuboid(
+        vec3(0.0, 0.0, 0.0),
+        vec3(165.0, 330.0, 165.0),
+        white.clone(),
+    ));
+    box1 = Arc::new(RotateY::new(box1, 15.0));
+    box1 = Arc::new(Translate::new(box1, Vec3::new(265.0, 0.0, 295.0)));
+    world.add(box1);
+
+
+    let mut box2: Arc<dyn Hittable> = Arc::new(cuboid(
+        vec3(0.0, 0.0, 0.0),
+        vec3(165.0, 165.0, 165.0),
+        white.clone(),
+    ));
+    box2 = Arc::new(RotateY::new(box2, -18.0));
+    box2 = Arc::new(Translate::new(box2, Vec3::new(130.0, 0.0, 65.0)));
+    world.add(box2);
+
+
+    // let world = HittableList::from(Arc::new(BvhNode::from(world)) as Arc<dyn Hittable>);
 
     let mut properties = CameraProperties::default();
 

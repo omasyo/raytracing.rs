@@ -1,11 +1,12 @@
 use crate::interval::Interval;
 use crate::ray::Ray;
 use glam::Vec3;
+use std::ops::Add;
 
 pub struct Aabb {
-    x: Interval,
-    y: Interval,
-    z: Interval,
+    pub x: Interval,
+    pub y: Interval,
+    pub z: Interval,
 }
 
 impl Aabb {
@@ -109,6 +110,17 @@ impl From<(&Aabb, &Aabb)> for Aabb {
             x: Interval::from((&a.x, &b.x)),
             y: Interval::from((&a.y, &b.y)),
             z: Interval::from((&a.z, &b.z)),
+        }
+    }
+}
+
+impl Add<Vec3> for &Aabb {
+    type Output = Aabb;
+    fn add(self, rhs: Vec3) -> Aabb {
+        Aabb {
+            x: self.x + rhs.x,
+            y: self.y + rhs.y,
+            z: self.z + rhs.z,
         }
     }
 }

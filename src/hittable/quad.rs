@@ -3,8 +3,9 @@ use crate::hittable::{HitRecord, Hittable};
 use crate::interval::Interval;
 use crate::material::Material;
 use crate::ray::Ray;
-use glam::Vec3;
+use glam::{vec3, Vec3};
 use std::sync::Arc;
+use crate::hittable::hittable_list::HittableList;
 
 pub struct Quad {
     q: Vec3,
@@ -86,4 +87,32 @@ fn is_interior(a: f32, b: f32) -> Option<(f32, f32)> {
     }
 
     Some((a, b))
+}
+
+pub fn cuboid(a: Vec3, b: Vec3, material: Arc<dyn Material>) -> HittableList {
+    let mut sides = HittableList::new();
+
+    let min = Vec3::new(
+        a.x.min(b.x),
+        a.y.min(b.y),
+        a.z.min(b.z),
+    );
+    let max = Vec3::new(
+        a.x.max(b.x),
+        a.y.max(b.y),
+        a.z.max(b.z),
+    );
+
+    let dx = vec3(max.x - min.x, 0.0, 0.0);
+    let dy = vec3(0.0, max.y - min.y, 0.0);
+    let dz = vec3(0.0, 0.0, max.z - min.z);
+
+    sides.add(Arc::new(Quad::new(vec3(min.x, min.y, max.z), dx, dy, material.clone())));
+    sides.add(Arc::new(Quad::new(vec3(max.x, min.y, max.z), -dz, dy, material.clone())));
+    sides.add(Arc::new(Quad::new(vec3(max.x, min.y, min.z), -dx, dy, material.clone())));
+    sides.add(Arc::new(Quad::new(vec3(min.x, min.y, min.z), dz, dy, material.clone())));
+    sides.add(Arc::new(Quad::new(vec3(min.x, max.y, max.z), dx, -dz, material.clone())));
+    sides.add(Arc::new(Quad::new(vec3(min.x, min.y, min.z), dx, dz, material.clone())));
+
+    sides
 }

@@ -3,6 +3,7 @@ pub mod bvh;
 pub mod hittable_list;
 pub mod sphere;
 pub mod quad;
+pub mod transform;
 
 use crate::interval::Interval;
 use crate::material::Material;
