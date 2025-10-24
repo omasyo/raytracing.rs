@@ -4,6 +4,7 @@ pub mod hittable_list;
 pub mod sphere;
 pub mod quad;
 pub mod transform;
+pub mod constant_medium;
 
 use crate::interval::Interval;
 use crate::material::Material;

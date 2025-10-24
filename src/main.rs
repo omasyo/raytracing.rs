@@ -15,6 +15,7 @@ use crate::camera::{Camera, CameraProperties};
 use crate::color::Color;
 use crate::hittable::Hittable;
 use crate::hittable::bvh::BvhNode;
+use crate::hittable::constant_medium::ConstantMedium;
 use crate::hittable::hittable_list::HittableList;
 use crate::hittable::quad::{Quad, cuboid};
 use crate::hittable::sphere::Sphere;
@@ -37,7 +38,7 @@ use std::thread;
 use winit::event::WindowEvent;
 
 fn main() {
-    let (world, camera) = match 7 {
+    let (world, camera) = match 9 {
         1 => bouncing_spheres(),
         2 => checkered_spheres(),
         3 => earth(),
@@ -45,9 +46,9 @@ fn main() {
         5 => quads(),
         6 => simple_light(),
         7 => cornell_box(),
-        _ => {
-            unreachable!()
-        }
+        8 => cornell_smoke(),
+        9 => final_scene(400, 10_000, 40),
+        _ => final_scene(400, 250, 4),
     };
 
     let mut buffer = Buffer::new(camera.image_width, camera.image_height);
@@ -457,7 +458,6 @@ fn cornell_box() -> (HittableList, Camera) {
     box1 = Arc::new(Translate::new(box1, Vec3::new(265.0, 0.0, 295.0)));
     world.add(box1);
 
-
     let mut box2: Arc<dyn Hittable> = Arc::new(cuboid(
         vec3(0.0, 0.0, 0.0),
         vec3(165.0, 165.0, 165.0),
@@ -466,7 +466,6 @@ fn cornell_box() -> (HittableList, Camera) {
     box2 = Arc::new(RotateY::new(box2, -18.0));
     box2 = Arc::new(Translate::new(box2, Vec3::new(130.0, 0.0, 65.0)));
     world.add(box2);
-
 
     // let world = HittableList::from(Arc::new(BvhNode::from(world)) as Arc<dyn Hittable>);
 
@@ -479,6 +478,231 @@ fn cornell_box() -> (HittableList, Camera) {
     properties.background = Vec3::splat(0.0);
     properties.v_fov = 40.0;
     properties.look_from = vec3(278.0, 278.0, -800.0);
+    properties.look_at = vec3(278.0, 278.0, 0.0);
+    properties.up = vec3(0.0, 1.0, 0.0);
+    properties.defocus_angle = 0.0;
+
+    let camera = Camera::new(properties);
+
+    (world, camera)
+}
+
+fn cornell_smoke() -> (HittableList, Camera) {
+    let mut world = HittableList::new();
+
+    let red = Arc::new(Lambertian::from(Vec3::new(0.65, 0.05, 0.05)));
+    let white = Arc::new(Lambertian::from(Vec3::new(0.73, 0.73, 0.73)));
+    let green = Arc::new(Lambertian::from(Vec3::new(0.12, 0.45, 0.15)));
+    let light = Arc::new(DiffuseLight::from(Vec3::splat(7.0)));
+
+    world.add(Arc::new(Quad::new(
+        vec3(555.0, 0.0, 0.0),
+        vec3(0.0, 555.0, 0.0),
+        vec3(0.0, 0.0, 555.0),
+        green,
+    )));
+    world.add(Arc::new(Quad::new(
+        vec3(0.0, 0.0, 0.0),
+        vec3(0.0, 555.0, 0.0),
+        vec3(0.0, 0.0, 555.0),
+        red,
+    )));
+    world.add(Arc::new(Quad::new(
+        vec3(113.0, 554.0, 127.0),
+        vec3(330.0, 0.0, 0.0),
+        vec3(0.0, 0.0, 305.0),
+        light,
+    )));
+    world.add(Arc::new(Quad::new(
+        vec3(0.0, 555.0, 0.0),
+        vec3(555.0, 0.0, 0.0),
+        vec3(0.0, 0.0, 555.0),
+        white.clone(),
+    )));
+    world.add(Arc::new(Quad::new(
+        vec3(0.0, 0.0, 0.0),
+        vec3(555.0, 0.0, 0.0),
+        vec3(0.0, 0.0, 555.0),
+        white.clone(),
+    )));
+    world.add(Arc::new(Quad::new(
+        vec3(0.0, 0.0, 555.0),
+        vec3(555.0, 0.0, 0.0),
+        vec3(0.0, 555.0, 0.0),
+        white.clone(),
+    )));
+
+    let mut box1: Arc<dyn Hittable> = Arc::new(cuboid(
+        vec3(0.0, 0.0, 0.0),
+        vec3(165.0, 330.0, 165.0),
+        white.clone(),
+    ));
+    box1 = Arc::new(RotateY::new(box1, 15.0));
+    box1 = Arc::new(Translate::new(box1, Vec3::new(265.0, 0.0, 295.0)));
+
+    let mut box2: Arc<dyn Hittable> = Arc::new(cuboid(
+        vec3(0.0, 0.0, 0.0),
+        vec3(165.0, 165.0, 165.0),
+        white.clone(),
+    ));
+    box2 = Arc::new(RotateY::new(box2, -18.0));
+    box2 = Arc::new(Translate::new(box2, Vec3::new(130.0, 0.0, 65.0)));
+
+    world.add(Arc::new(ConstantMedium::from_color(
+        box1,
+        0.01,
+        Vec3::splat(0.0),
+    )));
+    world.add(Arc::new(ConstantMedium::from_color(
+        box2,
+        0.01,
+        Vec3::splat(1.0),
+    )));
+
+    // let world = HittableList::from(Arc::new(BvhNode::from(world)) as Arc<dyn Hittable>);
+
+    let mut properties = CameraProperties::default();
+
+    properties.aspect_ratio = 1.0;
+    properties.image_width = 600;
+    properties.samples_per_pixel = 15;
+    properties.max_depth = 50;
+    properties.background = Vec3::splat(0.0);
+    properties.v_fov = 40.0;
+    properties.look_from = vec3(278.0, 278.0, -800.0);
+    properties.look_at = vec3(278.0, 278.0, 0.0);
+    properties.up = vec3(0.0, 1.0, 0.0);
+    properties.defocus_angle = 0.0;
+
+    let camera = Camera::new(properties);
+
+    (world, camera)
+}
+
+fn final_scene(
+    image_width: usize,
+    samples_per_pixel: u32,
+    max_depth: u32,
+) -> (HittableList, Camera) {
+    let mut boxes1 = HittableList::new();
+    let ground = Arc::new(Lambertian::from(Vec3::new(0.48, 0.83, 0.53)));
+
+    let boxes_per_side = 20;
+    for i in 0..boxes_per_side {
+        for j in 0..boxes_per_side {
+            let w = 100.0;
+            let x0 = -1000.0 + i as f32 * w;
+            let z0 = -1000.0 + j as f32 * w;
+            let y0 = 0.0;
+            let x1 = x0 + w;
+            let y1 = rand::random_range(0.0..101.0);
+            let z1 = z0 + w;
+
+            boxes1.add(Arc::new(cuboid(
+                vec3(x0, y0, z0),
+                vec3(x1, y1, z1),
+                ground.clone(),
+            )));
+        }
+    }
+
+    let mut world = HittableList::new();
+
+    world.add(Arc::new(BvhNode::from(boxes1)));
+
+    let light = Arc::new(DiffuseLight::from(Vec3::splat(7.0)));
+    world.add(Arc::new(Quad::new(
+        vec3(123.0, 554.0, 147.0),
+        vec3(300.0, 0.0, 0.0),
+        vec3(0.0, 0.0, 265.0),
+        light,
+    )));
+
+    let center1 = vec3(400.0, 400.0, 200.0);
+    let center2 = center1 + vec3(30.0, 0.0, 0.0);
+    let sphere_material = Arc::new(Lambertian::from(Vec3::new(0.7, 0.3, 0.1)));
+    world.add(Arc::new(Sphere::new_moving(
+        center1,
+        center2,
+        50.0,
+        sphere_material,
+    )));
+
+    world.add(Arc::new(Sphere::new_stationary(
+        vec3(260.0, 150.0, 45.0),
+        50.0,
+        Arc::new(Dielectric::new(1.5)),
+    )));
+    world.add(Arc::new(Sphere::new_stationary(
+        vec3(0.0, 150.0, 45.0),
+        50.0,
+        Arc::new(Metal::new(vec3(0.8, 0.8, 0.9), 1.0)),
+    )));
+
+    let boundary = Arc::new(Sphere::new_stationary(
+        vec3(360.0, 150.0, 45.0),
+        70.0,
+        Arc::new(Dielectric::new(1.5)),
+    ));
+    world.add(boundary.clone());
+    world.add(Arc::new(ConstantMedium::from_color(
+        boundary,
+        0.2,
+        vec3(0.2, 0.4, 0.9),
+    )));
+
+    let boundary = Arc::new(Sphere::new_stationary(
+        vec3(0.0, 0.0, 0.0),
+        5000.0,
+        Arc::new(Dielectric::new(1.5)),
+    ));
+    world.add(Arc::new(ConstantMedium::from_color(
+        boundary,
+        0.0001,
+        Vec3::splat(1.0),
+    )));
+
+    let e_mat = Arc::new(Lambertian::from(
+        Box::new(ImageTexture::new("earthmap.jpg")) as Box<dyn Texture>,
+    ));
+    world.add(Arc::new(Sphere::new_stationary(
+        vec3(400.0, 200.0, 400.0),
+        100.0,
+        e_mat,
+    )));
+    let per_mat = Arc::new(Lambertian::from(
+        Box::new(NoiseTexture::new(0.2)) as Box<dyn Texture>
+    ));
+    world.add(Arc::new(Sphere::new_stationary(
+        vec3(200.0, 280.0, 300.0),
+        80.0,
+        per_mat,
+    )));
+
+    let mut boxes2 = HittableList::new();
+    let white = Arc::new(Lambertian::from(Vec3::new(0.73, 0.73, 0.73)));
+    let ns = 1_000;
+    for _i in 0..ns {
+        boxes2.add(Arc::new(Sphere::new_stationary(
+            random_vector_range(0.0, 165.0),
+            10.0,
+            white.clone(),
+        )));
+    }
+
+    world.add(Arc::new(Translate::new(Arc::new(RotateY::new(Arc::new(BvhNode::from(boxes2)), 15.0)), vec3(-100.0, 270.0, 395.0))));
+
+    // let world = HittableList::from(Arc::new(BvhNode::from(world)) as Arc<dyn Hittable>);
+
+    let mut properties = CameraProperties::default();
+
+    properties.aspect_ratio = 1.0;
+    properties.image_width = image_width;
+    properties.samples_per_pixel = samples_per_pixel;
+    properties.max_depth = max_depth;
+    properties.background = Vec3::splat(0.0);
+    properties.v_fov = 40.0;
+    properties.look_from = vec3(478.0, 278.0, -600.0);
     properties.look_at = vec3(278.0, 278.0, 0.0);
     properties.up = vec3(0.0, 1.0, 0.0);
     properties.defocus_angle = 0.0;

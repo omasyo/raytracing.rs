@@ -4,6 +4,7 @@ pub mod metal;
 pub mod texture;
 pub mod solid_color;
 pub mod diffuse_light;
+pub mod isotropic;
 
 use crate::hittable::HitRecord;
 use crate::ray::Ray;
