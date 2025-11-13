@@ -143,7 +143,7 @@ impl Camera {
                 .par_iter_mut()
                 .enumerate()
                 .for_each(|(index, pixel)| {
-                    let ray = self.get_ray(index);
+                    let ray = self.get_ray(index, loop_count as u32);
                     let new_color = self.ray_color(&ray, self.max_depth, world);
                     let old_color = pixel.vec3();
                     let color = (old_color * (loop_count - 1.0) / loop_count)
@@ -161,11 +161,11 @@ impl Camera {
         }
     }
 
-    fn get_ray(&self, pixel_loc: usize) -> Ray {
+    fn get_ray(&self, pixel_loc: usize, loop_count: u32) -> Ray {
         let j = (pixel_loc / self.image_width) as f32;
         let i = (pixel_loc % self.image_width) as f32;
 
-        let offset = sample_square();
+        let offset = sample_square();// sample_square_stratified(pixel_loc as u32, loop_count);
         let pixel_sample = self.pixel00_loc
             + ((i + offset.x) * self.pixel_delta_u)
             + ((j + offset.y) * self.pixel_delta_v);

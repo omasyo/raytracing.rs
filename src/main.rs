@@ -35,7 +35,6 @@ use crate::window::{SoftbufferWindow, WindowProperties};
 use glam::{Vec3, vec3};
 use std::sync::Arc;
 use std::thread;
-use sobol_burley::sample;
 use winit::event::WindowEvent;
 
 fn main() {
