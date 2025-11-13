@@ -25,7 +25,7 @@ impl Material for Dielectric {
         let sin_theta = (1.0 - cos_theta * cos_theta).sqrt();
 
         let direction = if (refractive_index * sin_theta > 1.0)
-            || (reflectance(cos_theta, refractive_index) > rand::random_range(0.0..=1.0))
+            || (reflectance(cos_theta, refractive_index) > rand::random::<f32>())
         {
             unit_direction.reflect(rec.normal)
         } else {

@@ -2,9 +2,9 @@ use glam::Vec3;
 
 pub fn random_vector() -> Vec3 {
     Vec3 {
-        x: rand::random_range(0.0..=1.0),
-        y: rand::random_range(0.0..=1.0),
-        z: rand::random_range(0.0..=1.0),
+        x: rand::random::<f32>(),
+        y: rand::random::<f32>(),
+        z: rand::random::<f32>(),
     }
 }
 
@@ -29,8 +29,8 @@ pub fn random_unit_vector() -> Vec3 {
 pub fn random_in_unit_disk() -> Vec3 {
     loop {
         let p = Vec3 {
-            x: rand::random_range(0.0..=1.0),
-            y: rand::random_range(0.0..=1.0),
+            x: rand::random::<f32>(),
+            y: rand::random::<f32>(),
             z: 0.0,
         };
         let len_sq = p.length_squared();

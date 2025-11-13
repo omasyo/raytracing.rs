@@ -35,10 +35,11 @@ use crate::window::{SoftbufferWindow, WindowProperties};
 use glam::{Vec3, vec3};
 use std::sync::Arc;
 use std::thread;
+use sobol_burley::sample;
 use winit::event::WindowEvent;
 
 fn main() {
-    let (world, camera) = match 9 {
+    let (world, camera) = match 7 {
         1 => bouncing_spheres(),
         2 => checkered_spheres(),
         3 => earth(),
@@ -47,8 +48,8 @@ fn main() {
         6 => simple_light(),
         7 => cornell_box(),
         8 => cornell_smoke(),
-        9 => final_scene(400, 10_000, 40),
-        _ => final_scene(400, 250, 4),
+        9 => final_scene(400, Some(10_000), 40),
+        _ => final_scene(400, Some(250), 4),
     };
 
     let mut buffer = Buffer::new(camera.image_width, camera.image_height);
@@ -181,7 +182,7 @@ fn bouncing_spheres() -> (HittableList, Camera) {
 
     properties.aspect_ratio = 16.0 / 9.0;
     properties.image_width = 1000;
-    properties.samples_per_pixel = 15;
+    properties.samples_per_pixel = Some(15);
     properties.max_depth = 50;
     properties.background = vec3(0.7, 0.8, 1.0);
     properties.v_fov = 20.0;
@@ -222,7 +223,7 @@ fn checkered_spheres() -> (HittableList, Camera) {
 
     properties.aspect_ratio = 16.0 / 9.0;
     properties.image_width = 400;
-    properties.samples_per_pixel = 15;
+    properties.samples_per_pixel = Some(15);
     properties.max_depth = 50;
     properties.background = vec3(0.7, 0.8, 1.0);
     properties.v_fov = 20.0;
@@ -251,7 +252,7 @@ fn earth() -> (HittableList, Camera) {
 
     properties.aspect_ratio = 16.0 / 9.0;
     properties.image_width = 400;
-    properties.samples_per_pixel = 15;
+    properties.samples_per_pixel = Some(15);
     properties.max_depth = 50;
     properties.background = vec3(0.7, 0.8, 1.0);
     properties.v_fov = 20.0;
@@ -285,7 +286,7 @@ fn perlin_spheres() -> (HittableList, Camera) {
 
     properties.aspect_ratio = 16.0 / 9.0;
     properties.image_width = 400;
-    properties.samples_per_pixel = 15;
+    properties.samples_per_pixel = Some(15);
     properties.max_depth = 50;
     properties.background = vec3(0.7, 0.8, 1.0);
     properties.v_fov = 20.0;
@@ -343,7 +344,7 @@ fn quads() -> (HittableList, Camera) {
 
     properties.aspect_ratio = 1.0;
     properties.image_width = 400;
-    properties.samples_per_pixel = 15;
+    properties.samples_per_pixel = Some(15);
     properties.max_depth = 50;
     properties.background = vec3(0.7, 0.8, 1.0);
     properties.v_fov = 80.0;
@@ -390,7 +391,7 @@ fn simple_light() -> (HittableList, Camera) {
 
     properties.aspect_ratio = 16.0 / 9.0;
     properties.image_width = 400;
-    properties.samples_per_pixel = 15;
+    properties.samples_per_pixel = Some(15);
     properties.max_depth = 50;
     properties.background = Vec3::splat(0.0);
     properties.v_fov = 20.0;
@@ -473,7 +474,7 @@ fn cornell_box() -> (HittableList, Camera) {
 
     properties.aspect_ratio = 1.0;
     properties.image_width = 600;
-    properties.samples_per_pixel = 15;
+    properties.samples_per_pixel = Some(64);
     properties.max_depth = 50;
     properties.background = Vec3::splat(0.0);
     properties.v_fov = 40.0;
@@ -565,7 +566,7 @@ fn cornell_smoke() -> (HittableList, Camera) {
 
     properties.aspect_ratio = 1.0;
     properties.image_width = 600;
-    properties.samples_per_pixel = 15;
+    properties.samples_per_pixel = Some(15);
     properties.max_depth = 50;
     properties.background = Vec3::splat(0.0);
     properties.v_fov = 40.0;
@@ -581,7 +582,7 @@ fn cornell_smoke() -> (HittableList, Camera) {
 
 fn final_scene(
     image_width: usize,
-    samples_per_pixel: u32,
+    samples_per_pixel: Option<u32>,
     max_depth: u32,
 ) -> (HittableList, Camera) {
     let mut boxes1 = HittableList::new();

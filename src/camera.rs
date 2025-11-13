@@ -1,20 +1,21 @@
 use crate::buffer::Buffer;
 use crate::color::Color;
-use crate::hittable::hittable_list::HittableList;
 use crate::hittable::Hittable;
+use crate::hittable::hittable_list::HittableList;
 use crate::interval::Interval;
 use crate::material::ScatterResult;
 use crate::ray::Ray;
 use crate::utils::random_in_unit_disk;
-use glam::{vec3, Vec3};
+use glam::{Vec3, vec3};
 use rayon::prelude::*;
 use std::cmp::max;
 use std::sync::mpsc::Sender;
+use sobol_burley::sample;
 
 pub struct CameraProperties {
     pub aspect_ratio: f32,
     pub image_width: usize,
-    pub samples_per_pixel: u32,
+    pub samples_per_pixel: Option<u32>,
     pub max_depth: u32,
     pub background: Vec3,
     pub v_fov: f32,
@@ -30,7 +31,7 @@ impl Default for CameraProperties {
         Self {
             aspect_ratio: 1.0,
             image_width: 100,
-            samples_per_pixel: 10,
+            samples_per_pixel: None,
             max_depth: 50,
             background: Vec3::ZERO,
             v_fov: 90.0,
@@ -50,7 +51,9 @@ pub struct Camera {
     pixel00_loc: Vec3,
     pixel_delta_u: Vec3,
     pixel_delta_v: Vec3,
-    samples_per_pixel: u32,
+    samples_per_pixel: Option<u32>,
+    sqrt_spp: Option<u32>,
+    recip_sqrt_spp: Option<f32>,
     max_depth: u32,
     background: Vec3,
     u: Vec3,
@@ -95,6 +98,14 @@ impl Camera {
         let defocus_disk_u = u * defocus_radius;
         let defocus_disk_v = v * defocus_radius;
 
+        let (sqrt_spp, recip_sqrt_spp) = if let Some(spp) = properties.samples_per_pixel {
+            let sqrt_spp = (spp as f32).sqrt();
+            let recip_sqrt_spp = sqrt_spp.recip();
+            (Some(sqrt_spp as u32), Some(recip_sqrt_spp))
+        } else {
+            (None, None)
+        };
+
         Self {
             image_width,
             image_height,
@@ -103,6 +114,8 @@ impl Camera {
             pixel_delta_u,
             pixel_delta_v,
             samples_per_pixel: properties.samples_per_pixel,
+            sqrt_spp,
+            recip_sqrt_spp,
             max_depth: properties.max_depth,
             background: properties.background,
             u,
@@ -118,6 +131,8 @@ impl Camera {
         let mut buffer = Buffer::new(self.image_width, self.image_height);
         let mut loop_count = 1.0;
 
+        let samples_per_pixel = self.samples_per_pixel.unwrap_or(u32::MAX);
+
         loop {
             use std::time::Instant;
             let now = Instant::now();
@@ -128,10 +143,7 @@ impl Camera {
                 .par_iter_mut()
                 .enumerate()
                 .for_each(|(index, pixel)| {
-                    let j = index / self.image_width;
-                    let i = index % self.image_width;
-
-                    let ray = self.get_ray(i as f32, j as f32);
+                    let ray = self.get_ray(index);
                     let new_color = self.ray_color(&ray, self.max_depth, world);
                     let old_color = pixel.vec3();
                     let color = (old_color * (loop_count - 1.0) / loop_count)
@@ -141,12 +153,18 @@ impl Camera {
 
             let elapsed = now.elapsed();
             println!("Loop {loop_count} finished in {:.2?}", elapsed);
-            loop_count = loop_count + 1.0;
             tx.send(buffer.clone()).unwrap();
+            if loop_count == samples_per_pixel as f32 {
+                break;
+            }
+            loop_count += 1.0;
         }
     }
 
-    fn get_ray(&self, i: f32, j: f32) -> Ray {
+    fn get_ray(&self, pixel_loc: usize) -> Ray {
+        let j = (pixel_loc / self.image_width) as f32;
+        let i = (pixel_loc % self.image_width) as f32;
+
         let offset = sample_square();
         let pixel_sample = self.pixel00_loc
             + ((i + offset.x) * self.pixel_delta_u)
@@ -158,7 +176,7 @@ impl Camera {
             self.defocus_disk_sample()
         };
         let ray_direction = pixel_sample - ray_origin;
-        let ray_time = rand::random_range(0.0..=1.0);
+        let ray_time = rand::random::<f32>();
 
         Ray::new(ray_origin, ray_direction, ray_time)
     }
@@ -192,10 +210,20 @@ impl Camera {
     }
 }
 
+fn sample_square_stratified(pixel: u32, loop_count: u32) -> Vec3 {
+    let u = sample(loop_count, 0, pixel);
+    let v = sample(loop_count, 1, pixel);
+    Vec3::new(
+        u,
+        v,
+        0.0,
+    )
+}
+
 fn sample_square() -> Vec3 {
     Vec3::new(
-        rand::random_range(0.0..=1.0) - 0.5,
-        rand::random_range(0.0..=1.0) - 0.5,
+        rand::random_range(-0.5..=0.5),
+        rand::random_range(-0.5..=0.5),
         0.0,
     )
 }
