@@ -125,12 +125,12 @@ pub fn resize_to(surface: &mut RawSurface, width: u32, height: u32) {
 /// Redraws a `RawSurface`. Call this on `WindowEvent::RedrawRequested` inside `ApplicationHandler::window_event`,
 /// right after you've drawn everything to the `RawSurface`.
 pub fn redraw(window: &mut RawWindow, surface: &mut RawSurface) {
-    surface
-        .as_mut()
-        .unwrap()
-        .buffer_mut()
-        .unwrap()
-        .present()
-        .unwrap();
+    // surface
+    //     .as_mut()
+    //     .unwrap()
+    //     .buffer_mut()
+    //     .unwrap()
+    //     .present()
+    //     .unwrap();
     window.as_ref().unwrap().request_redraw();
 }

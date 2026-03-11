@@ -38,7 +38,7 @@ use std::thread;
 use winit::event::WindowEvent;
 
 fn main() {
-    let (world, camera) = match 7 {
+    let (world, camera) = match 9 {
         1 => bouncing_spheres(),
         2 => checkered_spheres(),
         3 => earth(),
@@ -71,19 +71,16 @@ fn main() {
             match event {
                 WindowEvent::RedrawRequested => {
                     let (width, _height) = window.inner_size();
-                    let mut window_buffer = window.buffer_mut();
-
                     if let Ok(b) = rx.recv() {
-                        // unsafe {
-                        //     buffer.write_at(index, pixel.clone());
-                        // }
                         buffer = b.clone();
+                        let mut window_buffer = window.buffer_mut();
                         for (index, pixel) in b.data.iter().enumerate() {
                             let x = index % b.width;
                             let y = index / b.width;
                             let window_index = (y * width) + x;
                             window_buffer[window_index] = pixel.linear_to_gamma().rgb_value();
                         }
+                        window_buffer.present().unwrap();
                     }
                 }
                 WindowEvent::CloseRequested => {
