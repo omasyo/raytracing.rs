@@ -1,39 +1,37 @@
 use crate::hittable::aabb::Aabb;
 use crate::hittable::{HitRecord, Hittable};
 use crate::interval::Interval;
-use crate::material::Material;
-use crate::material::isotropic::Isotropic;
-use crate::material::texture::Texture;
+use crate::material::MaterialKind;
+use crate::material::texture::TextureKind;
 use crate::ray::Ray;
 use glam::Vec3;
-use std::sync::Arc;
 
 pub struct ConstantMedium {
-    boundary: Arc<dyn Hittable>,
+    boundary: Box<dyn Hittable>,
     neg_inv_density: f32,
-    phase_function: Arc<dyn Material>,
+    phase_function: MaterialKind,
 }
 
 impl ConstantMedium {
-    pub fn new(boundary: Arc<dyn Hittable>, density: f32, texture: Box<dyn Texture>) -> Self {
+    pub fn new(boundary: Box<dyn Hittable>, density: f32, texture: TextureKind) -> Self {
         Self {
             boundary,
             neg_inv_density: -density.recip(),
-            phase_function: Arc::new(Isotropic::from(texture)),
+            phase_function: MaterialKind::isotropic_textured(texture),
         }
     }
 
-    pub fn from_color(boundary: Arc<dyn Hittable>, density: f32, albedo: Vec3) -> Self {
+    pub fn from_color(boundary: Box<dyn Hittable>, density: f32, albedo: Vec3) -> Self {
         Self {
             boundary,
             neg_inv_density: -density.recip(),
-            phase_function: Arc::new(Isotropic::from(albedo)),
+            phase_function: MaterialKind::isotropic(albedo),
         }
     }
 }
 
 impl Hittable for ConstantMedium {
-    fn hit(&self, r: &Ray, ray_t: Interval) -> Option<HitRecord> {
+    fn hit(&self, r: &Ray, ray_t: Interval) -> Option<HitRecord<'_>> {
         let Some(mut rec1) = self.boundary.hit(r, Interval::UNIVERSE) else {
             return None;
         };
@@ -62,17 +60,15 @@ impl Hittable for ConstantMedium {
 
         let t = rec1.t + hit_distance / ray_length;
 
-        let rec = HitRecord {
+        Some(HitRecord {
             point: r.at(t),
             normal: Vec3::X,
-            material: self.phase_function.clone(),
+            material: &self.phase_function,
             t,
             u: 0.0,
             v: 0.0,
             front_face: true,
-        };
-
-        Some(rec)
+        })
     }
 
     fn bounding_box(&self) -> &Aabb {

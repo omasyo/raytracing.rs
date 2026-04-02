@@ -24,7 +24,6 @@ impl Color {
         &self.value
     }
 
-    #[allow(unused_attributes)]
     pub fn red(&self) -> u8 {
         (self.value.x * 255.0).round() as u8
     }
@@ -40,15 +39,6 @@ impl Color {
     }
 
     pub fn rgb_value(&self) -> u32 {
-        // let mut color: u32 = 0;
-        // color |= ((v.x * 255f32) as u32) << 16;
-        // color |= ((v.y * 255f32) as u32) << 8;
-        // color |= (v.z * 255f32) as u32;
-        // Color { value: color }
-        // self.value & 0x00FFFFFF
-
-        let v = self.value;
-
         let r = self.red() as u32;
         let g = self.green() as u32;
         let b = self.blue() as u32;
@@ -63,7 +53,6 @@ impl Color {
         })
     }
 }
-
 
 pub fn linear_to_gamma(value: f32) -> f32 {
     if value > 0.0 {

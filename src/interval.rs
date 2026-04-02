@@ -1,5 +1,4 @@
 use std::ops::{Add, Range};
-use glam::Vec3;
 
 #[derive(Copy, Clone)]
 pub struct Interval {

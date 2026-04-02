@@ -3,6 +3,7 @@ use glam::Vec3;
 
 const POINT_COUNT: usize = 256;
 
+#[derive(Clone)]
 pub struct Perlin {
     rand_vec: [Vec3; POINT_COUNT],
     perm_x: [usize; POINT_COUNT],

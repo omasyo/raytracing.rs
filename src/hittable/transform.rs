@@ -3,17 +3,15 @@ use crate::hittable::{HitRecord, Hittable};
 use crate::interval::Interval;
 use crate::ray::Ray;
 use glam::{vec3, Vec3};
-use std::ops::Add;
-use std::sync::Arc;
 
 pub struct Translate {
-    object: Arc<dyn Hittable>,
+    object: Box<dyn Hittable>,
     offset: Vec3,
     bounding_box: Aabb,
 }
 
 impl Translate {
-    pub fn new(object: Arc<dyn Hittable>, offset: Vec3) -> Self {
+    pub fn new(object: Box<dyn Hittable>, offset: Vec3) -> Self {
         let bounding_box = object.bounding_box() + offset;
         Self {
             object,
@@ -24,7 +22,7 @@ impl Translate {
 }
 
 impl Hittable for Translate {
-    fn hit(&self, r: &Ray, ray_interval: Interval) -> Option<HitRecord> {
+    fn hit(&self, r: &Ray, ray_interval: Interval) -> Option<HitRecord<'_>> {
         let offset_ray = Ray::new(r.origin - self.offset, r.direction, r.time);
 
         let Some(mut hit_record) = self.object.hit(&offset_ray, ray_interval) else {
@@ -41,14 +39,14 @@ impl Hittable for Translate {
 }
 
 pub struct RotateY {
-    object: Arc<dyn Hittable>,
+    object: Box<dyn Hittable>,
     sin_theta: f32,
     cos_theta: f32,
     bounding_box: Aabb,
 }
 
 impl RotateY {
-    pub fn new(object: Arc<dyn Hittable>, angle: f32) -> Self {
+    pub fn new(object: Box<dyn Hittable>, angle: f32) -> Self {
         let angle = angle.to_radians();
         let cos_theta = angle.cos();
         let sin_theta = angle.sin();
@@ -92,7 +90,7 @@ impl RotateY {
 }
 
 impl Hittable for RotateY {
-    fn hit(&self, r: &Ray, ray_interval: Interval) -> Option<HitRecord> {
+    fn hit(&self, r: &Ray, ray_interval: Interval) -> Option<HitRecord<'_>> {
         let origin = vec3(
             (self.cos_theta * r.origin.x) - (self.sin_theta * r.origin.z),
             r.origin.y,

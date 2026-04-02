@@ -2,10 +2,9 @@ use super::{HitRecord, Hittable};
 use crate::hittable::aabb::Aabb;
 use crate::interval::Interval;
 use crate::ray::Ray;
-use std::sync::Arc;
 
 pub struct HittableList {
-    pub objects: Vec<Arc<dyn Hittable>>,
+    objects: Vec<Box<dyn Hittable>>,
     bounding_box: Aabb,
 }
 
@@ -21,14 +20,18 @@ impl HittableList {
         self.objects.clear();
     }
 
-    pub fn add(&mut self, hittable: Arc<dyn Hittable>) {
-        self.bounding_box = Aabb::from((self.bounding_box(), hittable.bounding_box()));
+    pub fn add(&mut self, hittable: Box<dyn Hittable>) {
+        self.bounding_box = Aabb::from((&self.bounding_box, hittable.bounding_box()));
         self.objects.push(hittable)
+    }
+
+    pub fn into_objects(self) -> Vec<Box<dyn Hittable>> {
+        self.objects
     }
 }
 
-impl From<Arc<dyn Hittable>> for HittableList {
-    fn from(hittable: Arc<dyn Hittable>) -> Self {
+impl From<Box<dyn Hittable>> for HittableList {
+    fn from(hittable: Box<dyn Hittable>) -> Self {
         let mut list = Self::new();
         list.add(hittable);
         list
@@ -36,8 +39,7 @@ impl From<Arc<dyn Hittable>> for HittableList {
 }
 
 impl Hittable for HittableList {
-    fn hit(&self, ray: &Ray, ray_interval: Interval) -> Option<HitRecord> {
-        // let mut temp_rec = HitRecord::default();
+    fn hit(&self, ray: &Ray, ray_interval: Interval) -> Option<HitRecord<'_>> {
         let mut closest_so_far = ray_interval.max;
         let mut rec = None;
 
@@ -49,5 +51,9 @@ impl Hittable for HittableList {
             }
         }
         rec
+    }
+
+    fn bounding_box(&self) -> &Aabb {
+        &self.bounding_box
     }
 }

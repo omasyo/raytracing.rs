@@ -1,21 +1,20 @@
 use super::{HitRecord, Hittable};
 use crate::hittable::aabb::Aabb;
 use crate::interval::Interval;
-use crate::material::Material;
+use crate::material::MaterialKind;
 use crate::ray::Ray;
 use glam::Vec3;
 use std::f32::consts::PI;
-use std::sync::Arc;
 
 pub struct Sphere {
     center: Ray,
     radius: f32,
-    material: Arc<dyn Material>,
+    material: MaterialKind,
     bounding_box: Aabb,
 }
 
 impl Sphere {
-    pub fn new_stationary(center: Vec3, radius: f32, material: Arc<dyn Material>) -> Sphere {
+    pub fn new_stationary(center: Vec3, radius: f32, material: MaterialKind) -> Sphere {
         assert!(radius > 0.0);
         let r_vec = Vec3::new(radius, radius, radius);
         Sphere {
@@ -30,7 +29,7 @@ impl Sphere {
         center1: Vec3,
         center2: Vec3,
         radius: f32,
-        material: Arc<dyn Material>,
+        material: MaterialKind,
     ) -> Sphere {
         assert!(radius > 0.0);
 
@@ -48,7 +47,7 @@ impl Sphere {
 }
 
 impl Hittable for Sphere {
-    fn hit(&self, ray: &Ray, ray_interval: Interval) -> Option<HitRecord> {
+    fn hit(&self, ray: &Ray, ray_interval: Interval) -> Option<HitRecord<'_>> {
         let current_center = self.center.at(ray.time);
         let oc = current_center - ray.origin;
 
@@ -73,16 +72,14 @@ impl Hittable for Sphere {
         let point = ray.at(root);
         let outward_normal = (point - current_center) / self.radius;
 
-        let rec = HitRecord::new(
+        Some(HitRecord::new(
             point,
             root,
             ray,
             outward_normal,
-            self.material.clone(),
+            &self.material,
             get_sphere_uv(outward_normal),
-        );
-
-        Some(rec)
+        ))
     }
 
     fn bounding_box(&self) -> &Aabb {
