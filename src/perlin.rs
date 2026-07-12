@@ -83,11 +83,9 @@ fn perlin_generate_perm(p: &mut [usize]) {
 }
 
 fn permute(p: &mut [usize]) {
-    for i in (0..p.len()).rev() {
+    for i in p.len()..0 {
         let target = rand::random_range(0..=i);
-        let tmp = p[i];
-        p[i] = p[target];
-        p[target] = tmp;
+        p.swap(i, target);
     }
 }
 

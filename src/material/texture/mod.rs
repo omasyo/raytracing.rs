@@ -1,7 +1,7 @@
 use crate::color::Color;
 use crate::perlin::Perlin;
 use glam::Vec3;
-use image::{open, Pixel, RgbImage};
+use image::{Pixel, RgbImage, open};
 use std::sync::Arc;
 
 #[derive(Clone)]
@@ -79,8 +79,7 @@ impl TextureKind {
             }
             Self::Noise { noise, scale } => {
                 Vec3::splat(0.5)
-                    * (1.0
-                        + f32::sin(scale * point.z + 10.0 * noise.turbulence(point, 7)))
+                    * (1.0 + f32::sin(scale * point.z + 10.0 * noise.turbulence(point, 7)))
             }
         }
     }

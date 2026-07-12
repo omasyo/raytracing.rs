@@ -29,7 +29,7 @@ use std::thread;
 use winit::event::WindowEvent;
 
 fn main() {
-    let (world, camera) = match 9 {
+    let (world, camera) = match 4 {
         1 => bouncing_spheres(),
         2 => checkered_spheres(),
         3 => earth(),
@@ -245,7 +245,7 @@ fn perlin_spheres() -> (HittableList, Camera) {
 
     let camera = Camera::new(CameraProperties {
         aspect_ratio: 16.0 / 9.0,
-        image_width: 400,
+        image_width: 800,
         samples_per_pixel: Some(15),
         max_depth: 50,
         background: vec3(0.7, 0.8, 1.0),
