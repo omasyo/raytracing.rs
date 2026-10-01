@@ -29,7 +29,7 @@ use std::thread;
 use winit::event::WindowEvent;
 
 fn main() {
-    let (world, camera) = match 4 {
+    let (world, camera) = match 8 {
         1 => bouncing_spheres(),
         2 => checkered_spheres(),
         3 => earth(),
@@ -490,16 +490,16 @@ fn cornell_smoke() -> (HittableList, Camera) {
     box1 = Box::new(RotateY::new(box1, 15.0));
     box1 = Box::new(Translate::new(box1, Vec3::new(265.0, 0.0, 295.0)));
 
-    let mut box2: Box<dyn Hittable> = Box::new(cuboid(
-        vec3(0.0, 0.0, 0.0),
-        vec3(165.0, 165.0, 165.0),
-        white,
+    let mut box2: Box<dyn Hittable> = Box::new(Sphere::new_stationary(
+        Vec3::splat(165.0 / 2.0),
+        165.0 / 2.0,
+        white.clone(),
     ));
     box2 = Box::new(RotateY::new(box2, -18.0));
-    box2 = Box::new(Translate::new(box2, Vec3::new(130.0, 0.0, 65.0)));
+    box2 = Box::new(Translate::new(box2, Vec3::new(130.0, 165.0, 65.0)));
 
     world.add(Box::new(ConstantMedium::from_color(box1, 0.01, Vec3::ZERO)));
-    world.add(Box::new(ConstantMedium::from_color(box2, 0.01, Vec3::ONE)));
+    world.add(Box::new(ConstantMedium::from_color(box2, 0.01, Vec3::ZERO)));
 
     let camera = Camera::new(CameraProperties {
         aspect_ratio: 1.0,

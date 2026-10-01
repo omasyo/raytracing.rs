@@ -6,7 +6,7 @@ use crate::interval::Interval;
 use crate::material::ScatterResult;
 use crate::ray::Ray;
 use crate::utils::random_in_unit_disk;
-use glam::{vec3, Vec3};
+use glam::{Vec3, vec3};
 use rayon::prelude::*;
 use std::cmp::max;
 use std::sync::mpsc::Sender;
@@ -121,11 +121,10 @@ impl Camera {
                 .par_iter_mut()
                 .enumerate()
                 .for_each(|(index, pixel)| {
-                    let ray = self.get_ray(index);
+                    let ray = self.get_ray(index, loop_count);
                     let new_color = self.ray_color(&ray, self.max_depth, world);
                     let old_color = pixel.vec3();
-                    let color =
-                        (old_color * (lc - 1.0) / lc) + (new_color * (1.0 / lc));
+                    let color = (old_color * (lc - 1.0) / lc) + (new_color * (1.0 / lc));
                     *pixel = Color::new(color);
                 });
 
@@ -135,11 +134,11 @@ impl Camera {
         }
     }
 
-    fn get_ray(&self, pixel_loc: usize) -> Ray {
+    fn get_ray(&self, pixel_loc: usize, loop_count: u32) -> Ray {
         let j = (pixel_loc / self.image_width) as f32;
         let i = (pixel_loc % self.image_width) as f32;
 
-        let offset = sample_square();
+        let offset = sample_square_stratified(pixel_loc as u32, loop_count);
         let pixel_sample = self.pixel00_loc
             + ((i + offset.x) * self.pixel_delta_u)
             + ((j + offset.y) * self.pixel_delta_v);
@@ -190,4 +189,10 @@ fn sample_square() -> Vec3 {
         rand::random_range(-0.5..=0.5),
         0.0,
     )
+}
+
+fn sample_square_stratified(pixel: u32, loop_count: u32) -> Vec3 {
+    let u = sobol_burley::sample(loop_count, 0, pixel);
+    let v = sobol_burley::sample(loop_count, 1, pixel);
+    Vec3::new(u, v, 0.0)
 }
